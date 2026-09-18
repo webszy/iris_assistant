@@ -1,0 +1,17 @@
+# pnpm 11 由 `pnpm install` 自动生成；仅存放包管理器设置，不含项目代码。
+# allowBuilds 显式设为 false：esbuild 与 workerd 的原生二进制由平台包
+# (@esbuild/darwin-*、@cloudflare/workerd-darwin-*) 提供，无需执行安装脚本。
+# 已实测：esbuild --version = 0.28.2，workerd --version = 2026-09-18。
+allowBuilds:
+  esbuild: false
+  workerd: false
+minimumReleaseAgeExclude:
+  - '@cloudflare/workerd-darwin-64@1.20260918.1'
+  - '@cloudflare/workerd-darwin-arm64@1.20260918.1'
+  - '@cloudflare/workerd-linux-64@1.20260918.1'
+  - '@cloudflare/workerd-linux-arm64@1.20260918.1'
+  - '@cloudflare/workerd-windows-64@1.20260918.1'
+  - '@cloudflare/workers-types@5.20260918.1'
+  - miniflare@5.20260918.0-alpha
+  - workerd@1.20260918.1
+  - wrangler@4.135.0

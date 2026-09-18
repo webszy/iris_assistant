@@ -1,0 +1,63 @@
+progress_contract: cdf-execution-progress/v1
+task_path: /Volumes/Development/Workspace/Iris-assisant/_cdtask/2026-09-19-project-core-capability-registry.md
+task_contract: cdf-cdtask/v1
+task_document_sha256: b4cbaced363b5e23b02b8070118448d2d60a7d4d312c164e09a83c107dca6575
+scope_lock_sha256: 0af14b82ecb57b5b433bfe0f68fad85d4c71f8071a8ff365b266229fb7965008
+approval_record_sha256: 447da15fa4866375d92aaec68df5de3df72cc85eb802be6699e5fb3cb451eafe
+overall_state: blocked
+created_at: 2026-09-18T18:28:47Z
+updated_at: 2026-09-18T19:17:58Z
+completed_at: null
+tasks:
+  - id: TASK-001
+    state: verified
+    started_at: 2026-09-18T18:28:47Z
+    verified_at: 2026-09-18T18:36:33Z
+    blocked_reason: null
+    verification_evidence:
+      - "AC-01 代码/定义：src/db/schema.ts 新增 projects/milestones/tasks/resources/capabilities 五表，含 UUID v4 TEXT 主键、INTEGER epoch ms 时间列、固定枚举默认值、UNIQUE(user_id,slug) 与全部批准索引；capabilities.resource_id NOT NULL 且非唯一，外键 onDelete: restrict（无 CASCADE）。"
+      - "AC-02 代码/定义：src/schemas/project.ts + src/routes/projects.ts 实现六个 Project 路由与 Zod/OpenAPI 定义；tests/projects.test.ts 覆盖 slug 同用户唯一、跨用户同 slug 复用、kind/status、列表过滤、include_archived、归档/取消归档幂等、PATCH、跨用户 404、无 hard delete。"
+      - "V01/V02 最终 D1 证据：pnpm db:migrate:local 应用 0002 成功（25 commands）；本地 D1 PRAGMA 显示 projects 列序 id,user_id,name,slug,description,kind,status,created_at,updated_at,archived_at，索引 projects_user_id_slug_unique(unique=1)/projects_user_id_status_idx/projects_user_id_archived_at_idx，外键 user_id -> users.id。"
+      - "V02 真实 API 证据：本地 wrangler dev 下创建 Project Iris 返回 201（kind=other、status=planned）；未认证访问 401；不存在 Project 404；DELETE /projects/{id} 不存在（404）；tests/projects.test.ts 25 项通过。"
+  - id: TASK-002
+    state: verified
+    started_at: 2026-09-18T18:36:33Z
+    verified_at: 2026-09-18T18:39:58Z
+    blocked_reason: null
+    verification_evidence:
+      - "AC-03 代码/定义：src/schemas/milestone.ts + src/routes/milestones.ts 实现 4 个 Milestone 路由（无 DELETE）；position 未提供时按 (user_id, project_id) 取 max+100，首条 100；无 deadline/due_at/target_at/completed_at 字段。"
+      - "AC-03 代码/定义：tests/milestones.test.ts 覆盖创建、position 自动 +100 与显式值、列表 position 升序、多 active 合法、patch status、cancelled 替代删除、跨用户与跨 Project 404、未批准字段被拒（19 项通过）。"
+      - "V03 最终 D1 证据：PRAGMA 显示 milestones 列为 id,user_id,project_id,name,description,status,position,created_at,updated_at，三个批准索引齐备，外键指向 users 与 projects；真实 HTTP 创建 Milestone v0.1 返回 201 且 position=100。"
+  - id: TASK-003
+    state: verified
+    started_at: 2026-09-18T18:39:58Z
+    verified_at: 2026-09-18T18:46:40Z
+    blocked_reason: null
+    verification_evidence:
+      - "AC-04 代码/定义：src/schemas/task.ts + src/routes/tasks.ts 实现 4 个 Task 路由（无 DELETE）；milestone_id 可空且必须同用户同 Project；position 按 Milestone 内或 project-level 分组取 max+100；completed_at 三态转换已实现。"
+      - "AC-04 代码/定义：tests/tasks.test.ts 覆盖 project-level 与 milestone task 创建、跨 Project/跨用户 Milestone 拒绝、position 分组自动生成、completed_at 三种转换、改 title 不改 completed_at、跨用户 404、cancelled 替代删除（19 项通过）。"
+      - "V04 最终 D1 证据：PRAGMA 显示 tasks 含 completed_at 且 6 个批准索引齐备；真实 HTTP 验证 todo -> completed 写入 completed_at、改 title 保留原 completed_at、completed -> doing 清空 completed_at。"
+  - id: TASK-004
+    state: verified
+    started_at: 2026-09-18T18:46:40Z
+    verified_at: 2026-09-18T18:50:41Z
+    blocked_reason: null
+    verification_evidence:
+      - "AC-05 代码/定义：src/schemas/resource.ts + src/routes/resources.ts 实现 5 个 Resource 路由；归属互斥返回 422 INVALID_RESOURCE_SCOPE，kind/location 不满足返回 422 INVALID_RESOURCE_LOCATION，Milestone/Task 不属于该 Project 返回 404，DELETE 仅删除 metadata。"
+      - "AC-05 代码/定义：PATCH 在合并后的完整记录上重跑归属/location/引用校验；kind 变更时反向检查全部引用 Capability。"
+      - "AC-05 代码/定义：tests/resources.test.ts 覆盖三种归属、互斥 422、file/directory/repository/url 的 location 422、跨 Project Milestone/Task 404、合并校验、DELETE 204 与跨用户 404（21 项通过）。"
+      - "V05 最终 D1 证据：PRAGMA 显示 resources 列序与外键（users/projects/milestones/tasks）正确；真实 HTTP 验证三种归属创建 201、milestone_id+task_id 422、file 缺 location 422。"
+  - id: TASK-005
+    state: blocked
+    started_at: 2026-09-18T18:50:41Z
+    verified_at: null
+    blocked_reason: "V10 指定的 pnpm test（vitest run 默认文件并行）在本机无法稳定启动全部 workerd worker：8 个测试文件时每次有 1 个 worker 以 ECONNRESET 启动失败，命令退出码非 0。已确认属环境/并发容量问题而非测试或代码缺陷：同一套测试在 --no-file-parallelism 与 --maxWorkers=2 下 8 文件 154 项全部通过，且 3 文件并行亦通过。使 pnpm test 稳定通过需要调整 vitest.config.ts 的 worker 并发设置，而该文件不在本阶段批准的 Write Scope 内，故按 CDF 停止并请求用户决定。"
+    verification_evidence:
+      - "AC-06 代码/定义：src/schemas/capability.ts + src/routes/capabilities.ts 实现六个规定路由（无 DELETE）；resource_id 必填且同用户同 Project；script/file 与 skill/directory 不匹配返回 422 INVALID_CAPABILITY_RESOURCE_KIND；enabled 默认 true；enable/disable 幂等；同一 Resource 允许多个 Capability。tests/capabilities.test.ts 25 项通过。"
+      - "AC-07 真实 D1 证据：tests/capabilities.test.ts 证明 enabled 与 disabled 引用均使 DELETE Resource 返回 409 RESOURCE_IN_USE；Resource.kind 不兼容修改返回 422 且 Resource/Capability 记录不变；多引用逐一检查；绕过 API 直接 DELETE 被 FK RESTRICT 拒绝且 Capability 行仍在。PRAGMA 确认 capabilities.resource_id -> resources.id on_delete=RESTRICT（无 CASCADE）。"
+      - "AC-08 证据：tests 覆盖未认证 401、非法 JSON/required/enum/type/query/params 400、业务不变量 422、跨 Project 与跨 User Resource 引用统一 404 RESOURCE_NOT_FOUND 且响应不含 CAPABILITY_RESOURCE_PROJECT_MISMATCH；请求无法指定 user_id/project_id（.strict() 拒绝只读字段）。"
+      - "AC-09 证据：新增唯一增量文件 drizzle/0002_project_core_capability_registry.sql，只创建五表及索引/外键；pnpm db:migrate:local 实际执行 25 commands 成功；d1_migrations 记录 0000/0001/0002；PRAGMA 确认 users 与 api_tokens 列与索引未变；未改写旧 migration。"
+      - "AC-10 证据：pnpm typecheck 通过；npx vitest run --no-file-parallelism 与 --maxWorkers=2 均为 8 文件 / 154 测试全部通过（含 auth、routes、schema 既有回归）；/openapi.json 恰好声明 25 个业务操作且全部带 bearerAuth、params/query/response，另有 /health 与 /api/v1/test 两个系统操作；错误码 enum 为 14 项；项目无 lint 配置，按计划记为 N/A。"
+      - "AC-10 未通过项（外部阻塞）：pnpm test（默认文件并行）在 8 个测试文件下每次有 1 个 worker 启动失败（ECONNRESET），命令退出码非 0；无任何测试断言失败。"
+      - "AC-11 证据：pnpm dev 启动本地 Worker（Ready on http://127.0.0.1:8787），用 pnpm auth:create-dev 生成的本地身份通过真实 HTTP 完成全链路：Project Iris -> Milestone v0.1 -> Task Implement Project Core（挂 Milestone）-> PRD file Resource（repository OPC_OS）-> Project Secretary Skill directory（skills/project-secretary/）-> Check Provider Script file（scripts/check-provider.ts）-> Capability Project Secretary(type=skill) 与 Check Provider Health(type=script)；读取与 kind/type/status/enabled 过滤正确；enable/disable 幂等；删除被引用 Resource 409；kind 破坏修改 422 且记录不变；未访问或修改任何真实 Git 内容。46 项检查中 45 项直接通过，第 46 项为脚本自身计数口径错误（把 /health 与 /api/v1/test 计入业务操作），单独复核确认业务操作为 25 项。"
+      - "AC-12 证据：docs/03 中 capabilities.resource_id 已从 nullable/Optional/if present 全部改为 Required，并新增 Capability/Resource 双向完整性保护与 Resource 删除保护文案；全文检索已无可选表述残留。"

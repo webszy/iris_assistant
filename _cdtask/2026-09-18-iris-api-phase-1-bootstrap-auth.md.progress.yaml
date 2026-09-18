@@ -1,0 +1,79 @@
+progress_contract: cdf-execution-progress/v1
+task_path: /Volumes/Development/Workspace/Iris-assisant/_cdtask/2026-09-18-iris-api-phase-1-bootstrap-auth.md
+task_contract: cdf-cdtask/v1
+task_document_sha256: e050746ba89481128a5c3874e95f930d8592688de151ee7670d9fde752cde995
+scope_lock_sha256: c66debdc6b01af9380a0bdb8746340df8fc2a8a39d9988d63319b3786076d6bc
+approval_record_sha256: 43dd3fd593702e5c863c8c7016707dfd519eb31dbf9a2d34f98ab82d75b3d072
+overall_state: completed
+created_at: 2026-09-18T23:44:01+08:00
+updated_at: 2026-09-19T01:12:17+08:00
+completed_at: 2026-09-19T01:12:17+08:00
+tasks:
+  - id: TASK-001
+    state: verified
+    started_at: 2026-09-18T23:44:30+08:00
+    verified_at: 2026-09-19T01:06:15+08:00
+    blocked_reason: null
+    verification_evidence:
+      - "2026-09-19: pnpm install --offline --frozen-lockfile completed successfully (Already up to date)."
+      - "2026-09-19: pnpm typecheck completed successfully for tsconfig.json and tsconfig.scripts.json."
+  - id: TASK-002
+    state: verified
+    started_at: 2026-09-18T23:52:00+08:00
+    verified_at: 2026-09-19T01:07:12+08:00
+    blocked_reason: null
+    verification_evidence:
+      - "2026-09-19: pnpm db:migrate:local applied 0001_users_contract.sql successfully; Wrangler reports no pending local migrations."
+      - "2026-09-19: Read-only local D1 inspection confirmed exact users columns id,name,timezone,locale,default_currency,created_at,updated_at; one UUID v4 user; integer epoch timestamps; approved defaults."
+      - "2026-09-19: Local D1 inspection confirmed api_tokens SHA-256 length, no iris_ raw token, required indexes, and zero foreign-key violations."
+  - id: TASK-003
+    state: verified
+    started_at: 2026-09-18T23:54:00+08:00
+    verified_at: 2026-09-19T01:08:08+08:00
+    blocked_reason: null
+    verification_evidence:
+      - "2026-09-19: pnpm auth:create-dev created a local user and Token successfully; sanitized capture found exactly one raw iris_ token occurrence."
+      - "2026-09-19: Independently recomputed SHA-256 matched the stored token_hash; local D1 contained zero token_hash values beginning with iris_."
+      - "2026-09-19: Created user's timezone, locale, and default_currency matched Asia/Shanghai, zh-CN, and CNY."
+  - id: TASK-004
+    state: verified
+    started_at: 2026-09-18T23:55:00+08:00
+    verified_at: 2026-09-19T01:08:58+08:00
+    blocked_reason: null
+    verification_evidence:
+      - "2026-09-19: pnpm test passed 24/24 tests across 3 files using the Cloudflare Workers Vitest pool and real D1 binding."
+      - "2026-09-19: Auth tests passed missing header, malformed token, invalid structure, unknown token, revoked token, expired token, valid token, ignored client user_id, and last_used_at update cases."
+  - id: TASK-005
+    state: verified
+    started_at: 2026-09-18T23:56:00+08:00
+    verified_at: 2026-09-19T01:10:16+08:00
+    blocked_reason: null
+    verification_evidence:
+      - "2026-09-19: Local Wrangler Worker started successfully; HTTP checks returned /health 200, missing auth 401, unknown token 401, valid token 200, /openapi.json 200, and unknown route 404."
+      - "2026-09-19: Valid local Worker request returned the Token-linked user with approved regional defaults and updated api_tokens.last_used_at."
+      - "2026-09-19: OpenAPI JSON contained /health, /api/v1/test, and the 401 response; response scans found no raw Token leakage."
+      - "2026-09-19: Vitest route probes verified uniform 400 and 500 handling; full suite passed 24/24."
+  - id: TASK-006
+    state: verified
+    started_at: 2026-09-18T23:57:00+08:00
+    verified_at: 2026-09-19T01:12:17+08:00
+    blocked_reason: null
+    verification_evidence:
+      - "AC-01: pnpm install --offline --frozen-lockfile completed successfully and the existing lockfile was current."
+      - "AC-02: pnpm typecheck passed both TypeScript projects; source scan found no explicit unexplained any usage."
+      - "AC-03: Local D1 applied 0000_init.sql and 0001_users_contract.sql; only users and api_tokens domain tables remain with required indexes and foreign key."
+      - "AC-04: Local D1 inspection confirmed UUID v4 IDs, integer epoch-millisecond timestamps, and API tests confirmed ISO timestamp output."
+      - "AC-05: pnpm auth:create-dev created a local user and iris_ Token; sanitized capture confirmed the raw Token appeared exactly once."
+      - "AC-06: Independently recomputed SHA-256 matched local D1 token_hash and the database contained zero raw iris_ Token values."
+      - "AC-07: Live local Worker GET /health returned 200 with the uniform success response."
+      - "AC-08: Live local Worker GET /api/v1/test without Authorization returned uniform 401."
+      - "AC-09: Vitest verified malformed Bearer formats return uniform 401."
+      - "AC-10: Live local Worker and Vitest verified an unknown Token returns uniform 401."
+      - "AC-11: Vitest verified a revoked Token returns uniform 401."
+      - "AC-12: Vitest verified an expired Token returns uniform 401."
+      - "AC-13: Live local Worker valid Token request returned 200 and the Token-linked current user; Vitest verified client user_id is ignored."
+      - "AC-14: Live local D1 inspection and Vitest confirmed valid requests update api_tokens.last_used_at."
+      - "AC-15: Live /openapi.json returned 200 with /health, /api/v1/test, and the authentication error response schema."
+      - "AC-16: Vitest verified uniform 400, 401, 404, and 500 handling; live response scans found no raw Token leakage."
+      - "AC-17: Local Wrangler Worker started and completed the Client-to-Worker-to-Hono-to-Auth-to-D1-to-Drizzle-to-User-to-Protected-Route JSON chain."
+      - "AC-18: Wrangler deploy --dry-run bundle succeeded; real remote D1 creation and production deployment remain explicitly waiting for a real Database ID and Cloudflare credentials."

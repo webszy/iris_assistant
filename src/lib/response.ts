@@ -1,0 +1,67 @@
+import { z } from "@hono/zod-openapi";
+
+export const ERROR_CODES = {
+  BAD_REQUEST: "BAD_REQUEST",
+  UNAUTHORIZED: "UNAUTHORIZED",
+  NOT_FOUND: "NOT_FOUND",
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+  PROJECT_NOT_FOUND: "PROJECT_NOT_FOUND",
+  MILESTONE_NOT_FOUND: "MILESTONE_NOT_FOUND",
+  TASK_NOT_FOUND: "TASK_NOT_FOUND",
+  RESOURCE_NOT_FOUND: "RESOURCE_NOT_FOUND",
+  CAPABILITY_NOT_FOUND: "CAPABILITY_NOT_FOUND",
+  SLUG_ALREADY_EXISTS: "SLUG_ALREADY_EXISTS",
+  INVALID_RESOURCE_SCOPE: "INVALID_RESOURCE_SCOPE",
+  INVALID_RESOURCE_LOCATION: "INVALID_RESOURCE_LOCATION",
+  INVALID_CAPABILITY_RESOURCE_KIND: "INVALID_CAPABILITY_RESOURCE_KIND",
+  RESOURCE_IN_USE: "RESOURCE_IN_USE",
+} as const;
+
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+
+/**
+ * 固定顺序的错误码清单，同时用于 OpenAPI enum。
+ * 新增错误码必须在此登记，保证运行时错误与文档声明一致。
+ */
+const ERROR_CODE_VALUES = [
+  ERROR_CODES.BAD_REQUEST,
+  ERROR_CODES.UNAUTHORIZED,
+  ERROR_CODES.NOT_FOUND,
+  ERROR_CODES.INTERNAL_ERROR,
+  ERROR_CODES.PROJECT_NOT_FOUND,
+  ERROR_CODES.MILESTONE_NOT_FOUND,
+  ERROR_CODES.TASK_NOT_FOUND,
+  ERROR_CODES.RESOURCE_NOT_FOUND,
+  ERROR_CODES.CAPABILITY_NOT_FOUND,
+  ERROR_CODES.SLUG_ALREADY_EXISTS,
+  ERROR_CODES.INVALID_RESOURCE_SCOPE,
+  ERROR_CODES.INVALID_RESOURCE_LOCATION,
+  ERROR_CODES.INVALID_CAPABILITY_RESOURCE_KIND,
+  ERROR_CODES.RESOURCE_IN_USE,
+] as const;
+
+export interface ApiErrorBody {
+  success: false;
+  error: {
+    code: ErrorCode;
+    message: string;
+  };
+}
+
+/**
+ * 统一错误响应体。
+ * `message` 只能是固定文案，绝不能包含原始 Token、Authorization 头、Secret 或 SQL 内部细节。
+ */
+export function errorResponse(code: ErrorCode, message: string): ApiErrorBody {
+  return { success: false, error: { code, message } };
+}
+
+export const errorResponseSchema = z
+  .object({
+    success: z.literal(false),
+    error: z.object({
+      code: z.enum(ERROR_CODE_VALUES),
+      message: z.string(),
+    }),
+  })
+  .openapi("ApiError");

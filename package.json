@@ -1,0 +1,33 @@
+{
+  "name": "iris-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Iris API — Phase 1: Cloudflare Workers + Hono + D1 + Drizzle + Bearer Auth",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.scripts.json",
+    "bundle:check": "wrangler deploy --dry-run --outdir dist",
+    "db:migrate:local": "wrangler d1 migrations apply iris-api-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply iris-api-db --remote",
+    "auth:create-dev": "tsx scripts/create-dev-auth.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^1.6.3",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/workers-types": "^5.20260918.1",
+    "@types/node": "^22.20.3",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.135.0"
+  }
+}

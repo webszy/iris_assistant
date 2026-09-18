@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "iris-api",
+  "main": "src/index.ts",
+  // 必须 <= miniflare 内置 workerd 支持的最高兼容日期（当前为 2026-08-22），
+  // 否则 @cloudflare/vitest-pool-workers 启动测试 Worker 时会报 ERR_RUNTIME_FAILURE。
+  "compatibility_date": "2026-08-22",
+  "d1_databases": [
+    {
+      // 占位符：本地开发（wrangler dev、d1 execute --local、d1 migrations apply --local）
+      // 不需要真实 ID。部署前必须替换为真实 D1 Database ID：
+      //   wrangler d1 create iris-api-db
+      "binding": "DB",
+      "database_name": "iris-api-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "drizzle"
+    }
+  ]
+}
