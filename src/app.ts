@@ -2,6 +2,8 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 
 import { ERROR_CODES, errorResponse } from "./lib/response";
+import { ServiceError } from "./lib/service-error";
+import { SERVICE_ERROR_STATUS } from "./controllers/service-errors";
 import { requireBearerAuth } from "./middleware/auth";
 import { registerCapabilityRoutes } from "./routes/capabilities";
 import { registerHealthRoute } from "./routes/health";
@@ -48,6 +50,9 @@ export function createApp(): OpenAPIHono<AppEnv> {
   app.notFound((c) => c.json(errorResponse(ERROR_CODES.NOT_FOUND, "请求的资源不存在。"), 404));
 
   app.onError((err, c) => {
+    if (err instanceof ServiceError) {
+      return c.json(errorResponse(err.code, err.message), SERVICE_ERROR_STATUS[err.code]);
+    }
     // 保留已支持的 HTTP 状态，但不回传异常携带的正文或内部信息。
     if (err instanceof HTTPException) {
       switch (err.status) {

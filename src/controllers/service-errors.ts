@@ -1,0 +1,15 @@
+import type { ServiceErrorCode } from "../lib/service-error";
+
+/** 新增业务错误时必须明确 HTTP 映射，避免默认误报 404。 */
+export const SERVICE_ERROR_STATUS = {
+  PROJECT_NOT_FOUND: 404,
+  MILESTONE_NOT_FOUND: 404,
+  TASK_NOT_FOUND: 404,
+  RESOURCE_NOT_FOUND: 404,
+  CAPABILITY_NOT_FOUND: 404,
+  SLUG_ALREADY_EXISTS: 409,
+  RESOURCE_IN_USE: 409,
+  INVALID_RESOURCE_SCOPE: 422,
+  INVALID_RESOURCE_LOCATION: 422,
+  INVALID_CAPABILITY_RESOURCE_KIND: 422,
+} as const satisfies Record<ServiceErrorCode, 404 | 409 | 422>;

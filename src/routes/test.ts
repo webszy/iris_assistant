@@ -2,7 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import type { OpenAPIHono } from "@hono/zod-openapi";
 
 import { errorResponseSchema } from "../lib/response";
-import { nowEpochMs, toIso8601Utc } from "../lib/time";
+import { getAuthenticatedTest } from "../controllers/test";
 import type { AppEnv } from "../types/env";
 
 const authenticatedUserSchema = z
@@ -50,18 +50,5 @@ export const testRoute = createRoute({
 });
 
 export function registerTestRoute(app: OpenAPIHono<AppEnv>): void {
-  app.openapi(testRoute, (c) =>
-    c.json(
-      {
-        success: true,
-        data: {
-          message: "认证通过",
-          user: c.get("user"),
-          tokenId: c.get("apiTokenId"),
-          requestedAt: toIso8601Utc(nowEpochMs()),
-        },
-      },
-      200,
-    ),
-  );
+  app.openapi(testRoute, getAuthenticatedTest);
 }

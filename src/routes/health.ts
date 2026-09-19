@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import type { OpenAPIHono } from "@hono/zod-openapi";
 
-import { nowEpochMs, toIso8601Utc } from "../lib/time";
+import { getHealth } from "../controllers/health";
 import type { AppEnv } from "../types/env";
 
 const healthResponseSchema = z
@@ -30,17 +30,5 @@ export const healthRoute = createRoute({
 });
 
 export function registerHealthRoute(app: OpenAPIHono<AppEnv>): void {
-  app.openapi(healthRoute, (c) =>
-    c.json(
-      {
-        success: true,
-        data: {
-          status: "ok",
-          service: "iris-api",
-          timestamp: toIso8601Utc(nowEpochMs()),
-        },
-      },
-      200,
-    ),
-  );
+  app.openapi(healthRoute, getHealth);
 }
