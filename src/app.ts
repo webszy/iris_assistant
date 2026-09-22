@@ -13,6 +13,8 @@ import { registerResourceRoutes } from "./routes/resources";
 import { registerResourceContentRoutes } from "./routes/resource-content";
 import { registerTaskRoutes } from "./routes/tasks";
 import { registerTestRoute } from "./routes/test";
+import { registerFinanceRoutes } from "./routes/finance";
+import { registerExpenseRoutes } from "./routes/expenses";
 import type { AppEnv } from "./types/env";
 
 export function createApp(): OpenAPIHono<AppEnv> {
@@ -34,6 +36,8 @@ export function createApp(): OpenAPIHono<AppEnv> {
   app.use("/api/v1/test", requireBearerAuth);
   app.use("/api/v1/projects", requireBearerAuth);
   app.use("/api/v1/projects/*", requireBearerAuth);
+  app.use("/api/v1/finance", requireBearerAuth);
+  app.use("/api/v1/finance/*", requireBearerAuth);
 
   registerHealthRoute(app);
   registerTestRoute(app);
@@ -43,10 +47,12 @@ export function createApp(): OpenAPIHono<AppEnv> {
   registerResourceContentRoutes(app);
   registerResourceRoutes(app);
   registerCapabilityRoutes(app);
+  registerFinanceRoutes(app);
+  registerExpenseRoutes(app);
 
   app.doc("/openapi.json", {
     openapi: "3.0.0",
-    info: { title: "Iris API", version: "0.1.0" },
+    info: { title: "Iris API", version: "0.2.0" },
   });
 
   app.notFound((c) => c.json(errorResponse(ERROR_CODES.NOT_FOUND, "请求的资源不存在。"), 404));

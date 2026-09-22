@@ -1,4 +1,5 @@
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { check, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
  * Phase 1 建立 users / api_tokens。
@@ -208,3 +209,54 @@ export type MilestoneRow = typeof milestones.$inferSelect;
 export type TaskRow = typeof tasks.$inferSelect;
 export type ResourceRow = typeof resources.$inferSelect;
 export type CapabilityRow = typeof capabilities.$inferSelect;
+
+/** Finance settings are explicit; users.default_currency is not a fallback. */
+export const financeSettings = sqliteTable("finance_settings", {
+  userId: text("user_id").primaryKey().notNull().references(() => users.id),
+  reportingCurrency: text("reporting_currency").notNull(),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+}, (table) => [
+  check("finance_settings_currency_check", sql`length(${table.reportingCurrency}) = 3 AND ${table.reportingCurrency} NOT GLOB '*[^A-Z]*'`),
+]);
+
+/** Global current cache. Direction: 1 base = rate quote; not a historical table. */
+export const exchangeRates = sqliteTable("exchange_rates", {
+  baseCurrency: text("base_currency").notNull(),
+  quoteCurrency: text("quote_currency").notNull(),
+  rateScaled: integer("rate_scaled").notNull(),
+  source: text("source").notNull(),
+  rateDate: text("rate_date").notNull(),
+  fetchedAt: integer("fetched_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.baseCurrency, table.quoteCurrency] }),
+  check("exchange_rates_base_check", sql`length(${table.baseCurrency}) = 3 AND ${table.baseCurrency} NOT GLOB '*[^A-Z]*'`),
+  check("exchange_rates_quote_check", sql`length(${table.quoteCurrency}) = 3 AND ${table.quoteCurrency} NOT GLOB '*[^A-Z]*'`),
+  check("exchange_rates_rate_check", sql`typeof(${table.rateScaled}) = 'integer' AND ${table.rateScaled} BETWEEN 1 AND 9007199254740991`),
+]);
+
+export const expenses = sqliteTable("expenses", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  projectId: text("project_id").notNull().references(() => projects.id),
+  amountMinor: integer("amount_minor").notNull(),
+  currency: text("currency").notNull(),
+  reportingCurrency: text("reporting_currency").notNull(),
+  exchangeRateScaled: integer("exchange_rate_scaled").notNull(),
+  category: text("category"),
+  description: text("description"),
+  occurredAt: integer("occurred_at").notNull(),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+}, (table) => [
+  index("expenses_user_id_project_id_occurred_at_idx").on(table.userId, table.projectId, table.occurredAt),
+  check("expenses_amount_check", sql`typeof(${table.amountMinor}) = 'integer' AND ${table.amountMinor} BETWEEN 1 AND 9007199254740991`),
+  check("expenses_rate_check", sql`typeof(${table.exchangeRateScaled}) = 'integer' AND ${table.exchangeRateScaled} BETWEEN 1 AND 9007199254740991`),
+  check("expenses_currency_check", sql`length(${table.currency}) = 3 AND ${table.currency} NOT GLOB '*[^A-Z]*'`),
+  check("expenses_reporting_currency_check", sql`length(${table.reportingCurrency}) = 3 AND ${table.reportingCurrency} NOT GLOB '*[^A-Z]*'`),
+]);
+
+export type FinanceSettingsRow = typeof financeSettings.$inferSelect;
+export type ExchangeRateRow = typeof exchangeRates.$inferSelect;
+export type ExpenseRow = typeof expenses.$inferSelect;

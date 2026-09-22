@@ -2,10 +2,11 @@
 name: iris
 description: >-
   Manage persistent structured work/life state and durable project memory in Iris:
-  Projects, Milestones, Tasks, Resources, Capabilities, and Markdown Resource Content.
+  Projects, Milestones, Tasks, Resources, Capabilities, Markdown Resource Content,
+  and Finance / Project Expense Tracking.
   Use for Iris status/next-action queries, explicit state changes, Resource/Capability
   registration, saving PRDs, specs, design documents or long-term notes, and reading
-  or editing existing Iris Markdown. Do not trigger for ordinary translation,
+  or editing existing Iris Markdown, recording Project expenses and querying costs. Do not trigger for ordinary translation,
   knowledge questions, temporary analysis, or undecided brainstorming.
 ---
 
@@ -228,8 +229,10 @@ If scheduling is essential to the request, explain the limitation rather than cl
 ### WRITE
 
 Write only the state change established in DECIDE and authorized by the user's intent.
-Use the common operations in [api-guide.md](references/api-guide.md).
-For exact fields, enums, bodies, responses, or errors, consult
+For Finance, use [finance-api.md](references/finance-api.md); add
+[project-api.md](references/project-api.md) only when Project resolution is needed.
+For existing non-Finance workflows, use the common operations in [api-guide.md](references/api-guide.md).
+For exact fields, enums, bodies, responses, unexpected errors or documentation drift, consult
 [openapi.json](references/openapi.json), the authoritative API specification.
 Never invent endpoints, fields, query parameters, enum values, or request structures.
 Use JSON bodies only as documented; do not send database field names merely because they
@@ -237,7 +240,8 @@ appear in concepts.md. Preserve unrelated values when changing an existing recor
 
 ### VERIFY
 
-Verify important mutations: entity creation, Task status transitions, Project archive/unarchive,
+Verify important mutations: FinanceSettings updates, Expense creation/update/deletion,
+entity creation, Task status transitions, Project archive/unarchive,
 Capability enable/disable, Resource creation, Capability registration, and relationship changes.
 First inspect the mutation response for the resolved identity, requested values, and relationships.
 Use an additional read only when the response does not establish the result; do not mechanically
@@ -482,6 +486,16 @@ or persist a recommendation automatically.
 
 Load only what the present decision requires; reuse already-read reference context.
 
+- Finance / Expense operations → [finance-api.md](references/finance-api.md).
+  Add [project-api.md](references/project-api.md) only for Project resolution.
+  Do not automatically load api-guide.md, concepts.md, content/resource/capability references,
+  or openapi.json for Finance. OpenAPI is for exact schema, unexpected errors, debugging or drift.
+  Finance records stay in D1: never create a Markdown Resource or mirror expenses to iris-memory.
+  Do not create a Project merely because an expense mentions one; preserve missing-target rules.
+  For cost questions use Project Expense Summary, not a full expense download and LLM arithmetic.
+  Use current cached FX automatically; an explicit user rate wins. Missing settings require an
+  explicit reporting-currency choice. Currency cannot be PATCHed; changing it requires an
+  authorized delete and replacement, never an automatic workaround.
 - Read [concepts.md](references/concepts.md) for Project vs Task, optional Milestones,
   Resource role/scope/location, Markdown ownership, domain relationships, and Capability → Resource constraints.
 - Read [api-guide.md](references/api-guide.md) for common operations and workflows:
@@ -517,16 +531,22 @@ that affects the intended operation and stop the dependent write rather than gue
   For content-specific errors, follow Content failures above.
 - `502 CONTENT_PROVIDER_ERROR` or a failed create with unknown outcome: stop dependent writes;
   inspect state before retrying. Do not infer that neither metadata nor content was written.
-- `422`: recheck concepts.md, api-guide.md, and the relevant OpenAPI definitions for invalid
+- Finance errors: follow finance-api.md for missing settings/rates, immutable currency,
+  precision and user/Project isolation. Never guess a rate or silently round an invalid amount.
+- Non-Finance `422`: recheck concepts.md, api-guide.md, and the relevant OpenAPI definitions for invalid
   Resource scope/location or incompatible Capability/Resource kinds. Do not force a retry.
 - Other unexpected failures: preserve uncertainty, consult the documented response definitions,
   and stop dependent writes if success cannot be established. Avoid repeated unchanged retries.
 
 ## Current Scope
 
-Support only Projects, Milestones, Tasks, Resources, Capabilities, and Markdown Resource
-CREATE / READ / UPDATE. No arbitrary file management, content deletion, move/rename,
+Support only Projects, Milestones, Tasks, Resources, Capabilities, Markdown Resource
+CREATE / READ / UPDATE, and Finance Phase 1: explicit settings, read-only current FX,
+Project Expense CRUD and Project Expense Summary. Finance is structured D1 state;
+no Income, Account, Balance, Budget, historical FX, global expense summary or autonomous Finance behavior.
+No arbitrary file management, content deletion, move/rename,
 Knowledge/RAG, notifications or email.
-Do not claim support for Reminder, Scheduler, Finance, Weather, Rules, Knowledge, Decision,
+The internal daily FX cron is not a user-facing Scheduler or Reminder feature.
+Do not claim support for Reminder, Scheduler, Weather, Rules, Knowledge, Decision,
 Personality, Skill Factory, automatic Capability execution, or Cloud Agent execution.
 Do not treat roadmap documentation as evidence that these features are available.

@@ -8,7 +8,7 @@ const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
 describe("D1 schema 契约", () => {
-  it("Phase 2 后共 7 张业务表，且未新增其他表", async () => {
+  it("Finance Phase 1 后共 10 张业务表，且未新增其他表", async () => {
     // 过滤 SQLite 内部表（sqlite_*）、Cloudflare 内部表（_cf_*）与 wrangler 的迁移记录表。
     const { results } = await env.DB.prepare(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name <> 'd1_migrations' ORDER BY name",
@@ -17,6 +17,9 @@ describe("D1 schema 契约", () => {
     expect(results.map((row) => row.name)).toEqual([
       "api_tokens",
       "capabilities",
+      "exchange_rates",
+      "expenses",
+      "finance_settings",
       "milestones",
       "projects",
       "resources",
