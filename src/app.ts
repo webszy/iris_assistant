@@ -13,9 +13,14 @@ import { registerResourceRoutes } from "./routes/resources";
 import { registerResourceContentRoutes } from "./routes/resource-content";
 import { registerTaskRoutes } from "./routes/tasks";
 import { registerTestRoute } from "./routes/test";
+import { registerFinanceRoutes } from "./routes/finance";
+import { registerNotificationRoutes } from "./routes/notifications";
+import type { NotificationAdapters } from "./providers/notification-channel";
+import { registerReminderRoutes } from "./routes/reminders";
+import { registerExpenseRoutes } from "./routes/expenses";
 import type { AppEnv } from "./types/env";
 
-export function createApp(): OpenAPIHono<AppEnv> {
+export function createApp(options: { notificationAdapters?: NotificationAdapters } = {}): OpenAPIHono<AppEnv> {
   const app = new OpenAPIHono<AppEnv>({
     // 统一处理请求校验失败（400）。
     defaultHook: (result, c) =>
@@ -34,6 +39,11 @@ export function createApp(): OpenAPIHono<AppEnv> {
   app.use("/api/v1/test", requireBearerAuth);
   app.use("/api/v1/projects", requireBearerAuth);
   app.use("/api/v1/projects/*", requireBearerAuth);
+  app.use("/api/v1/finance", requireBearerAuth);
+  app.use("/api/v1/finance/*", requireBearerAuth);
+
+  app.use("/api/v1/reminders", requireBearerAuth);
+  app.use("/api/v1/reminders/*", requireBearerAuth);
 
   registerHealthRoute(app);
   registerTestRoute(app);
@@ -43,10 +53,16 @@ export function createApp(): OpenAPIHono<AppEnv> {
   registerResourceContentRoutes(app);
   registerResourceRoutes(app);
   registerCapabilityRoutes(app);
+  registerFinanceRoutes(app);
+  registerExpenseRoutes(app);
+  app.use("/api/v1/notifications", requireBearerAuth);
+  app.use("/api/v1/notifications/*", requireBearerAuth);
+  registerNotificationRoutes(app, options.notificationAdapters);
+  registerReminderRoutes(app);
 
   app.doc("/openapi.json", {
     openapi: "3.0.0",
-    info: { title: "Iris API", version: "0.1.0" },
+    info: { title: "Iris API", version: "0.2.0" },
   });
 
   app.notFound((c) => c.json(errorResponse(ERROR_CODES.NOT_FOUND, "请求的资源不存在。"), 404));

@@ -2,10 +2,13 @@
 name: iris
 description: >-
   Manage persistent structured work/life state and durable project memory in Iris:
-  Projects, Milestones, Tasks, Resources, Capabilities, and Markdown Resource Content.
+  Projects, Milestones, Tasks, Resources, Capabilities, Markdown Resource Content,
+  Finance / Project Expense Tracking, Reminder scheduling definitions and occurrences,
+  and Notification history/settings/channels.
   Use for Iris status/next-action queries, explicit state changes, Resource/Capability
   registration, saving PRDs, specs, design documents or long-term notes, and reading
-  or editing existing Iris Markdown. Do not trigger for ordinary translation,
+  or editing existing Iris Markdown, recording Project expenses and querying costs, and explicit
+  Reminder create/read/done/delay/skip/cancel/reschedule and Notification query/settings/channel requests. Do not trigger for ordinary translation,
   knowledge questions, temporary analysis, or undecided brainstorming.
 ---
 
@@ -228,8 +231,10 @@ If scheduling is essential to the request, explain the limitation rather than cl
 ### WRITE
 
 Write only the state change established in DECIDE and authorized by the user's intent.
-Use the common operations in [api-guide.md](references/api-guide.md).
-For exact fields, enums, bodies, responses, or errors, consult
+For Finance, use [finance-api.md](references/finance-api.md); add
+[project-api.md](references/project-api.md) only when Project resolution is needed.
+For existing non-Finance workflows, use the common operations in [api-guide.md](references/api-guide.md).
+For exact fields, enums, bodies, responses, unexpected errors or documentation drift, consult
 [openapi.json](references/openapi.json), the authoritative API specification.
 Never invent endpoints, fields, query parameters, enum values, or request structures.
 Use JSON bodies only as documented; do not send database field names merely because they
@@ -237,7 +242,8 @@ appear in concepts.md. Preserve unrelated values when changing an existing recor
 
 ### VERIFY
 
-Verify important mutations: entity creation, Task status transitions, Project archive/unarchive,
+Verify important mutations: FinanceSettings updates, Expense creation/update/deletion,
+entity creation, Task status transitions, Project archive/unarchive,
 Capability enable/disable, Resource creation, Capability registration, and relationship changes.
 First inspect the mutation response for the resolved identity, requested values, and relationships.
 Use an additional read only when the response does not establish the result; do not mechanically
@@ -482,6 +488,30 @@ or persist a recommendation automatically.
 
 Load only what the present decision requires; reuse already-read reference context.
 
+- Reminder operations → [reminder-api.md](references/reminder-api.md).
+  Add [project-api.md](references/project-api.md) only for an explicit Project resolution.
+  Do not automatically load Finance/content/Resource/Capability references or openapi.json.
+  Reminder Project association is optional; never create a Project merely to hold a reminder.
+  Resolve exact reminder/occurrence identity; ambiguous replies require clarification.
+  Distinguish occurrence DONE/DELAY/SKIP from reminder CANCEL/RESCHEDULE.
+  Convert natural language to absolute datetime/IANA timezone/RRULE before calling the API.
+  Notification durable integration is implemented; production channel adapter is pending.
+  Saving a Reminder does not promise external delivery.
+- Notification query/settings/channel operations → [notification-api.md](references/notification-api.md).
+  For “做完了 / 晚点 / 今天算了” in Notification context, resolve sourceContext.reminderId
+  and sourceId, then use [reminder-api.md](references/reminder-api.md) for DONE/DELAY/SKIP.
+  Do not infer identity from title or create arbitrary Notifications. Source actions belong
+  to Reminder. Do not automatically load Finance/content/Resource/Capability or openapi.json.
+- Finance / Expense operations → [finance-api.md](references/finance-api.md).
+  Add [project-api.md](references/project-api.md) only for Project resolution.
+  Do not automatically load api-guide.md, concepts.md, content/resource/capability references,
+  or openapi.json for Finance. OpenAPI is for exact schema, unexpected errors, debugging or drift.
+  Finance records stay in D1: never create a Markdown Resource or mirror expenses to iris-memory.
+  Do not create a Project merely because an expense mentions one; preserve missing-target rules.
+  For cost questions use Project Expense Summary, not a full expense download and LLM arithmetic.
+  Use current cached FX automatically; an explicit user rate wins. Missing settings require an
+  explicit reporting-currency choice. Currency cannot be PATCHed; changing it requires an
+  authorized delete and replacement, never an automatic workaround.
 - Read [concepts.md](references/concepts.md) for Project vs Task, optional Milestones,
   Resource role/scope/location, Markdown ownership, domain relationships, and Capability → Resource constraints.
 - Read [api-guide.md](references/api-guide.md) for common operations and workflows:
@@ -517,16 +547,28 @@ that affects the intended operation and stop the dependent write rather than gue
   For content-specific errors, follow Content failures above.
 - `502 CONTENT_PROVIDER_ERROR` or a failed create with unknown outcome: stop dependent writes;
   inspect state before retrying. Do not infer that neither metadata nor content was written.
-- `422`: recheck concepts.md, api-guide.md, and the relevant OpenAPI definitions for invalid
+- Notification errors, immutable snapshots and delivery/settings semantics: follow notification-api.md.
+- Reminder errors and terminal/version rules: follow reminder-api.md; never revive completed/cancelled reminders through PATCH.
+- Finance errors: follow finance-api.md for missing settings/rates, immutable currency,
+  precision and user/Project isolation. Never guess a rate or silently round an invalid amount.
+- Non-Finance `422`: recheck concepts.md, api-guide.md, and the relevant OpenAPI definitions for invalid
   Resource scope/location or incompatible Capability/Resource kinds. Do not force a retry.
 - Other unexpected failures: preserve uncertainty, consult the documented response definitions,
   and stop dependent writes if success cannot be established. Avoid repeated unchanged retries.
 
 ## Current Scope
 
-Support only Projects, Milestones, Tasks, Resources, Capabilities, and Markdown Resource
-CREATE / READ / UPDATE. No arbitrary file management, content deletion, move/rename,
-Knowledge/RAG, notifications or email.
-Do not claim support for Reminder, Scheduler, Finance, Weather, Rules, Knowledge, Decision,
+Support only Projects, Milestones, Tasks, Resources, Capabilities, Markdown Resource
+CREATE / READ / UPDATE, and Finance Phase 1: explicit settings, read-only current FX,
+Project Expense CRUD and Project Expense Summary; Reminder Phase 1 definitions, occurrences,
+DONE/DELAY/SKIP/CANCEL/RESCHEDULE and deterministic scheduling; Notification immutable history,
+settings/channels, durable Reminder acceptance, retry and sequential fallback. Finance is structured D1 state;
+no Income, Account, Balance, Budget, historical FX, global expense summary or autonomous Finance behavior.
+No arbitrary file management, content deletion, move/rename,
+Knowledge/RAG, arbitrary Notification creation or email ingestion.
+Production channel adapter is pending; no Fake Adapter is registered in production. Without a
+usable channel, occurrences remain pending. Reminder/Delivery run on the minute cron; Finance
+remains daily. Do not promise external delivery or exact-to-the-second timing.
+Do not claim support for general Scheduler, Weather, Rules, Knowledge, Decision,
 Personality, Skill Factory, automatic Capability execution, or Cloud Agent execution.
 Do not treat roadmap documentation as evidence that these features are available.

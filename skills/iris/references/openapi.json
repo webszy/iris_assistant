@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Iris API",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "components": {
     "securitySchemes": {
@@ -156,7 +156,28 @@
                   "CONTENT_CONFLICT",
                   "CONTENT_TOO_LARGE",
                   "RESOURCE_CONTENT_UNSUPPORTED",
-                  "CONTENT_PROVIDER_ERROR"
+                  "CONTENT_PROVIDER_ERROR",
+                  "FINANCE_SETTINGS_REQUIRED",
+                  "EXPENSE_NOT_FOUND",
+                  "INVALID_MONEY_AMOUNT",
+                  "INVALID_CURRENCY",
+                  "INVALID_EXCHANGE_RATE",
+                  "EXCHANGE_RATE_NOT_FOUND",
+                  "REMINDER_NOT_FOUND",
+                  "REMINDER_OCCURRENCE_NOT_FOUND",
+                  "INVALID_TIMEZONE",
+                  "INVALID_RRULE",
+                  "INVALID_REMINDER_STATE",
+                  "INVALID_OCCURRENCE_STATE",
+                  "INVALID_DELAY_TIME",
+                  "NOTIFICATION_NOT_FOUND",
+                  "NOTIFICATION_DELIVERY_NOT_FOUND",
+                  "NOTIFICATION_SETTINGS_NOT_FOUND",
+                  "NOTIFICATION_DISABLED",
+                  "NO_USABLE_NOTIFICATION_CHANNEL",
+                  "INVALID_NOTIFICATION_CHANNEL",
+                  "NOTIFICATION_CHANNEL_NOT_FOUND",
+                  "NOTIFICATION_CHANNEL_ALREADY_EXISTS"
                 ]
               },
               "message": {
@@ -1150,6 +1171,879 @@
             "type": "boolean"
           }
         },
+        "additionalProperties": false
+      },
+      "FinanceSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/FinanceSettings"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "FinanceSettings": {
+        "type": "object",
+        "properties": {
+          "reportingCurrency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reportingCurrency",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PutFinanceSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "reporting_currency": {
+            "$ref": "#/components/schemas/FinanceCurrencyInput"
+          }
+        },
+        "required": [
+          "reporting_currency"
+        ],
+        "additionalProperties": false
+      },
+      "FinanceCurrencyInput": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3,
+        "pattern": "^[A-Za-z]{3}$",
+        "example": "USD"
+      },
+      "ExchangeRateListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExchangeRate"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "ExchangeRate": {
+        "type": "object",
+        "properties": {
+          "baseCurrency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "quoteCurrency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "rate": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d{8}$"
+          },
+          "source": {
+            "type": "string"
+          },
+          "rateDate": {
+            "type": "string"
+          },
+          "fetchedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "baseCurrency",
+          "quoteCurrency",
+          "rate",
+          "source",
+          "rateDate",
+          "fetchedAt"
+        ]
+      },
+      "ExpenseListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Expense"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "Expense": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d+(?:\\.\\d+)?$"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "reportingCurrency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "exchangeRate": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d{8}$"
+          },
+          "reportingAmount": {
+            "type": "string",
+            "pattern": "^\\d+(?:\\.\\d+)?$"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "occurredAt": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "amount",
+          "currency",
+          "reportingCurrency",
+          "exchangeRate",
+          "reportingAmount",
+          "category",
+          "description",
+          "occurredAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ExpenseItemResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/Expense"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "CreateExpenseRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "$ref": "#/components/schemas/MoneyInput"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/FinanceCurrencyInput"
+          },
+          "exchange_rate": {
+            "$ref": "#/components/schemas/ExchangeRateInput"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "occurred_at"
+        ],
+        "additionalProperties": false
+      },
+      "MoneyInput": {
+        "type": "string",
+        "maxLength": 32,
+        "pattern": "^\\d+(?:\\.\\d+)?$",
+        "example": "120.50",
+        "description": "Positive decimal string; excess currency precision is rejected. Scaled integer must be <= 9007199254740991."
+      },
+      "ExchangeRateInput": {
+        "type": "string",
+        "maxLength": 32,
+        "pattern": "^\\d+(?:\\.\\d{1,8})?$",
+        "example": "7.1843",
+        "description": "Positive decimal string, at most 8 decimals. 1 expense currency = rate reporting currency; scaled value <= 9007199254740991."
+      },
+      "ExpenseSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "originalTotals": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "currency": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 3,
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "amount": {
+                      "type": "string",
+                      "pattern": "^\\d+(?:\\.\\d+)?$"
+                    }
+                  },
+                  "required": [
+                    "currency",
+                    "amount"
+                  ]
+                }
+              },
+              "reportingTotals": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "currency": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 3,
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "amount": {
+                      "type": "string",
+                      "pattern": "^\\d+(?:\\.\\d+)?$"
+                    }
+                  },
+                  "required": [
+                    "currency",
+                    "amount"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "count",
+              "originalTotals",
+              "reportingTotals"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "UpdateExpenseRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "$ref": "#/components/schemas/MoneyInput"
+          },
+          "exchange_rate": {
+            "$ref": "#/components/schemas/ExchangeRateInput"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "reminder_occurrence"
+            ]
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "sourceVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "sourceContext": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "reminderId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reminderId"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "deliveryState": {
+            "type": "string",
+            "enum": [
+              "delivered",
+              "delivering",
+              "failed"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "sourceType",
+          "sourceId",
+          "sourceVersion",
+          "sourceContext",
+          "title",
+          "body",
+          "deliveryState",
+          "createdAt"
+        ]
+      },
+      "NotificationSettings": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "enabled",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PutNotificationSettings": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationChannel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "priority": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "channel",
+          "enabled",
+          "priority",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateNotificationChannel": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "Server-registered adapter identifier; normalized to lowercase. No production adapter is registered yet."
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "channel",
+          "enabled",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "PatchNotificationChannel": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotificationDelivery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "notificationId": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "sent",
+              "failed"
+            ]
+          },
+          "attemptCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "lastAttemptAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "sentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "providerMessageId": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastErrorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "notificationId",
+          "channel",
+          "status",
+          "attemptCount",
+          "nextAttemptAt",
+          "lastAttemptAt",
+          "sentAt",
+          "providerMessageId",
+          "lastErrorCode",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "Reminder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "rrule": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduleVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "nextTriggerAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "title",
+          "description",
+          "status",
+          "startsAt",
+          "timezone",
+          "rrule",
+          "scheduleVersion",
+          "nextTriggerAt",
+          "createdAt",
+          "updatedAt",
+          "completedAt",
+          "cancelledAt"
+        ]
+      },
+      "CreateReminderRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000
+          },
+          "project_id": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "IANA zone. Recurrence follows local wall time; nonexistent times are skipped, repeated times use the first instant.",
+            "example": "Asia/Shanghai"
+          },
+          "rrule": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "RRULE only: FREQ=DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY, BYMONTHDAY, BYMONTH, COUNT or UTC UNTIL (YYYYMMDDTHHmmssZ). DTSTART/TZID and other keys are rejected. starts_at must match; missed valid periods consume COUNT, DST gaps do not.",
+            "example": "FREQ=DAILY"
+          }
+        },
+        "required": [
+          "title",
+          "starts_at",
+          "timezone"
+        ],
+        "additionalProperties": false
+      },
+      "PatchReminderRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000
+          },
+          "project_id": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "IANA zone. Recurrence follows local wall time; nonexistent times are skipped, repeated times use the first instant.",
+            "example": "Asia/Shanghai"
+          },
+          "rrule": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "RRULE only: FREQ=DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY, BYMONTHDAY, BYMONTH, COUNT or UTC UNTIL (YYYYMMDDTHHmmssZ). DTSTART/TZID and other keys are rejected. starts_at must match; missed valid periods consume COUNT, DST gaps do not.",
+            "example": "FREQ=DAILY"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReminderEmptyAction": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "ReminderOccurrence": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reminderId": {
+            "type": "string"
+          },
+          "scheduleVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "scheduledFor": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "triggerAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "triggerVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "triggered",
+              "done",
+              "skipped",
+              "cancelled"
+            ]
+          },
+          "triggerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastTriggeredAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "handledAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "reminderId",
+          "scheduleVersion",
+          "scheduledFor",
+          "triggerAt",
+          "triggerVersion",
+          "status",
+          "triggerCount",
+          "lastTriggeredAt",
+          "handledAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "DelayOccurrenceRequest": {
+        "type": "object",
+        "properties": {
+          "until": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "until"
+        ],
         "additionalProperties": false
       }
     },
@@ -3556,6 +4450,2739 @@
           },
           "404": {
             "description": "Project / Capability / Resource 不存在，或不属于当前用户与 URL Project。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/settings": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "读取用户财务设置",
+        "description": "设置缺失返回 422 FINANCE_SETTINGS_REQUIRED，不使用 users.default_currency。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceSettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / INVALID_CURRENCY。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "创建或更新用户财务设置",
+        "description": "reporting_currency 统一大写；仅影响未来 Expense，不修改历史记录。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutFinanceSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceSettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / INVALID_CURRENCY。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/exchange-rates": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "查询当前汇率缓存",
+        "description": "只读、全局共享缓存。1 baseCurrency = rate quoteCurrency；rate 是 8 位小数字符串。任意过滤组合均返回列表，缺失 pair 返回空列表。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/FinanceCurrencyInput"
+            },
+            "required": false,
+            "name": "base_currency",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/FinanceCurrencyInput"
+            },
+            "required": false,
+            "name": "quote_currency",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRateListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / INVALID_CURRENCY。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/expenses": {
+      "get": {
+        "tags": [
+          "Expense"
+        ],
+        "summary": "列出 Project 支出",
+        "description": "按 occurred_at DESC 返回，无分页。from/to 为带时区 ISO 时间，双端包含；currency 大写归一化，category 去除首尾空白后精确匹配。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/FinanceCurrencyInput"
+            },
+            "required": false,
+            "name": "currency",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY / INVALID_MONEY_AMOUNT / INVALID_EXCHANGE_RATE：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PROJECT_NOT_FOUND / EXPENSE_NOT_FOUND：不存在或不属于当前用户与 URL Project。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / EXCHANGE_RATE_NOT_FOUND / INVALID_MONEY_AMOUNT / INVALID_CURRENCY / INVALID_EXCHANGE_RATE。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Expense"
+        ],
+        "summary": "记录 Project 支出",
+        "description": "occurred_at 必填。必须显式配置 FinanceSettings。汇率优先级：显式值、同币种 1、当前缓存；历史日期也使用当前缓存，不调用历史 FX。金额正数且不得超过币种精度。逐笔 reportingAmount 四舍五入到 reporting currency 最小单位。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY / INVALID_MONEY_AMOUNT / INVALID_EXCHANGE_RATE：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PROJECT_NOT_FOUND / EXPENSE_NOT_FOUND：不存在或不属于当前用户与 URL Project。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / EXCHANGE_RATE_NOT_FOUND / INVALID_MONEY_AMOUNT / INVALID_CURRENCY / INVALID_EXCHANGE_RATE。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/expenses/summary": {
+      "get": {
+        "tags": [
+          "Expense"
+        ],
+        "summary": "汇总 Project 支出",
+        "description": "仅使用 Expense 保存的汇率。originalTotals 按原币种分组；reportingTotals 按历史 reporting currency 分组，累加逐笔四舍五入金额。from/to 双端包含；category 精确匹配。空集合 count=0，两组总额为空数组。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY / INVALID_MONEY_AMOUNT / INVALID_EXCHANGE_RATE：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PROJECT_NOT_FOUND / EXPENSE_NOT_FOUND：不存在或不属于当前用户与 URL Project。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / EXCHANGE_RATE_NOT_FOUND / INVALID_MONEY_AMOUNT / INVALID_CURRENCY / INVALID_EXCHANGE_RATE。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/expenses/{expenseId}": {
+      "get": {
+        "tags": [
+          "Expense"
+        ],
+        "summary": "读取一笔支出",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "expenseId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY / INVALID_MONEY_AMOUNT / INVALID_EXCHANGE_RATE：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PROJECT_NOT_FOUND / EXPENSE_NOT_FOUND：不存在或不属于当前用户与 URL Project。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / EXCHANGE_RATE_NOT_FOUND / INVALID_MONEY_AMOUNT / INVALID_CURRENCY / INVALID_EXCHANGE_RATE。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Expense"
+        ],
+        "summary": "修改一笔支出",
+        "description": "currency 和 reporting_currency 永久冻结，提交即拒绝；修改币种必须删除重建。可改 amount、exchange_rate、category、description、occurred_at。只在显式提交 exchange_rate 时修改汇率；不查询当前设置或 FX。category/description 可用 null 清空。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "expenseId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExpenseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY / INVALID_MONEY_AMOUNT / INVALID_EXCHANGE_RATE：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PROJECT_NOT_FOUND / EXPENSE_NOT_FOUND：不存在或不属于当前用户与 URL Project。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / EXCHANGE_RATE_NOT_FOUND / INVALID_MONEY_AMOUNT / INVALID_CURRENCY / INVALID_EXCHANGE_RATE。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Expense"
+        ],
+        "summary": "永久删除一笔支出",
+        "description": "只硬删除指定 Expense，不修改 Project、设置或汇率缓存。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "expenseId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "删除成功，无响应体"
+          },
+          "400": {
+            "description": "BAD_REQUEST / INVALID_CURRENCY / INVALID_MONEY_AMOUNT / INVALID_EXCHANGE_RATE：请求校验失败。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED：缺少或无效的访问令牌。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PROJECT_NOT_FOUND / EXPENSE_NOT_FOUND：不存在或不属于当前用户与 URL Project。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "FINANCE_SETTINGS_REQUIRED / EXCHANGE_RATE_NOT_FOUND / INVALID_MONEY_AMOUNT / INVALID_CURRENCY / INVALID_EXCHANGE_RATE。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "summary": "listNotifications",
+        "description": "列出通知；from/to 基于 createdAt，包含两端。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "reminder_occurrence"
+              ]
+            },
+            "required": false,
+            "name": "source_type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Notification"
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: strict request validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND / NOTIFICATION_CHANNEL_NOT_FOUND，包括跨用户资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOTIFICATION_CHANNEL_ALREADY_EXISTS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "NOTIFICATION_SETTINGS_NOT_FOUND / INVALID_NOTIFICATION_CHANNEL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/settings": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "summary": "getNotificationSettings",
+        "description": "设置缺失返回 422；不会自动启用。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationSettings"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: strict request validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND / NOTIFICATION_CHANNEL_NOT_FOUND，包括跨用户资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOTIFICATION_CHANNEL_ALREADY_EXISTS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "NOTIFICATION_SETTINGS_NOT_FOUND / INVALID_NOTIFICATION_CHANNEL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notification"
+        ],
+        "summary": "putNotificationSettings",
+        "description": "总开关仅影响新 Delivery 选择；已有投递继续。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutNotificationSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationSettings"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: strict request validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND / NOTIFICATION_CHANNEL_NOT_FOUND，包括跨用户资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOTIFICATION_CHANNEL_ALREADY_EXISTS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "NOTIFICATION_SETTINGS_NOT_FOUND / INVALID_NOTIFICATION_CHANNEL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/channels": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "summary": "listNotificationChannels",
+        "description": "按 priority、createdAt、id 稳定排序。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NotificationChannel"
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: strict request validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND / NOTIFICATION_CHANNEL_NOT_FOUND，包括跨用户资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOTIFICATION_CHANNEL_ALREADY_EXISTS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "NOTIFICATION_SETTINGS_NOT_FOUND / INVALID_NOTIFICATION_CHANNEL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notification"
+        ],
+        "summary": "createNotificationChannel",
+        "description": "仅允许已注册 Adapter；重复渠道返回 409。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationChannel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationChannel"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: strict request validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND / NOTIFICATION_CHANNEL_NOT_FOUND，包括跨用户资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOTIFICATION_CHANNEL_ALREADY_EXISTS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "NOTIFICATION_SETTINGS_NOT_FOUND / INVALID_NOTIFICATION_CHANNEL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/channels/{channelId}": {
+      "patch": {
+        "tags": [
+          "Notification"
+        ],
+        "summary": "patchNotificationChannel",
+        "description": "仅更新 enabled/priority，channel 不可变。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "channelId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchNotificationChannel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationChannel"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: strict request validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND / NOTIFICATION_CHANNEL_NOT_FOUND，包括跨用户资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOTIFICATION_CHANNEL_ALREADY_EXISTS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "NOTIFICATION_SETTINGS_NOT_FOUND / INVALID_NOTIFICATION_CHANNEL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{notificationId}": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "summary": "getNotification",
+        "description": "不可变消息；deliveryState 只由已持久化 Delivery 推导，sourceContext 按用户归属解析。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "notificationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Notification"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: strict request validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND / NOTIFICATION_CHANNEL_NOT_FOUND，包括跨用户资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOTIFICATION_CHANNEL_ALREADY_EXISTS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "NOTIFICATION_SETTINGS_NOT_FOUND / INVALID_NOTIFICATION_CHANNEL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{notificationId}/deliveries": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "summary": "listNotificationDeliveries",
+        "description": "投递历史；不返回租约或敏感错误。每分钟调度，nextAttemptAt 是最早重试时间。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "notificationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NotificationDelivery"
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: strict request validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND / NOTIFICATION_CHANNEL_NOT_FOUND，包括跨用户资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOTIFICATION_CHANNEL_ALREADY_EXISTS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "NOTIFICATION_SETTINGS_NOT_FOUND / INVALID_NOTIFICATION_CHANNEL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reminders": {
+      "get": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "列出 Reminders",
+        "description": "默认按创建时间降序；project_id 必须属于当前用户。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "completed",
+                "cancelled"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "project_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Reminder"
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "创建 Reminder",
+        "description": "允许过去时间；创建定义与第一次 occurrence 原子提交。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReminderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Reminder"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reminders/{reminderId}": {
+      "get": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "读取 Reminder",
+        "description": "nextTriggerAt 是所有 pending triggerAt 的最小值；active 时可以为 null。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "reminderId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Reminder"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "修改 Reminder",
+        "description": "实质调度修改增加 scheduleVersion，并取消旧版本全部 pending；已完成或取消的 Reminder 禁止重排。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "reminderId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchReminderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Reminder"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reminders/{reminderId}/cancel": {
+      "post": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "永久取消 Reminder",
+        "description": "取消全部 pending，保留历史 triggered；重复调用幂等。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "reminderId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderEmptyAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Reminder"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reminders/{reminderId}/occurrences": {
+      "get": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "列出 Occurrences",
+        "description": "from/to 基于 scheduledFor，包含两端；按 scheduledFor、scheduleVersion 升序。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "reminderId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "triggered",
+                "done",
+                "skipped",
+                "cancelled"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReminderOccurrence"
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reminders/{reminderId}/occurrences/{occurrenceId}": {
+      "get": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "读取 Occurrence",
+        "description": "Reminder 与 occurrence 必须同属当前用户，且父子关系匹配。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "reminderId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "occurrenceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReminderOccurrence"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reminders/{reminderId}/occurrences/{occurrenceId}/done": {
+      "post": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "完成本次提醒",
+        "description": "允许 pending/triggered；重复 DONE 幂等；旧版本只收尾不推进。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "reminderId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "occurrenceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderEmptyAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReminderOccurrence"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reminders/{reminderId}/occurrences/{occurrenceId}/skip": {
+      "post": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "跳过本次提醒",
+        "description": "允许 pending/triggered；重复 SKIP 幂等；后续规则继续。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "reminderId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "occurrenceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderEmptyAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReminderOccurrence"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reminders/{reminderId}/occurrences/{occurrenceId}/delay": {
+      "post": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "推迟本次提醒",
+        "description": "只修改当前版本的目标 occurrence；until 必须晚于现在，实质变化递增 triggerVersion，不影响其他 occurrence。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "reminderId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "occurrenceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DelayOccurrenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReminderOccurrence"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: 请求字段、日期格式或过滤范围无效。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "REMINDER_NOT_FOUND / REMINDER_OCCURRENCE_NOT_FOUND / PROJECT_NOT_FOUND，含跨用户与错误父子关系。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_REMINDER_STATE / INVALID_OCCURRENCE_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_TIMEZONE / INVALID_RRULE / INVALID_DELAY_TIME",
             "content": {
               "application/json": {
                 "schema": {
