@@ -125,6 +125,12 @@ describe("统一错误处理", () => {
       "INVALID_RESOURCE_LOCATION",
       "INVALID_CAPABILITY_RESOURCE_KIND",
       "RESOURCE_IN_USE",
+      "CONTENT_ALREADY_EXISTS",
+      "CONTENT_NOT_FOUND",
+      "CONTENT_CONFLICT",
+      "CONTENT_TOO_LARGE",
+      "RESOURCE_CONTENT_UNSUPPORTED",
+      "CONTENT_PROVIDER_ERROR",
     ]);
   });
 
@@ -208,7 +214,7 @@ interface FullOpenApiDoc {
   paths: Record<string, Record<string, OpenApiOperation>>;
 }
 
-/** Project 6 + Milestone 4 + Task 4 + Resource 5 + Capability 6 = 25 个业务操作。 */
+/** Project 6 + Milestone 4 + Task 4 + Resource 8 + Capability 6 = 28 个业务操作。 */
 const BUSINESS_OPERATIONS: [string, string][] = [
   ["get", "/api/v1/projects"],
   ["post", "/api/v1/projects"],
@@ -229,6 +235,9 @@ const BUSINESS_OPERATIONS: [string, string][] = [
   ["get", "/api/v1/projects/{projectId}/resources/{resourceId}"],
   ["patch", "/api/v1/projects/{projectId}/resources/{resourceId}"],
   ["delete", "/api/v1/projects/{projectId}/resources/{resourceId}"],
+  ["post", "/api/v1/projects/{projectId}/resources/markdown"],
+  ["get", "/api/v1/projects/{projectId}/resources/{resourceId}/content"],
+  ["put", "/api/v1/projects/{projectId}/resources/{resourceId}/content"],
   ["get", "/api/v1/projects/{projectId}/capabilities"],
   ["post", "/api/v1/projects/{projectId}/capabilities"],
   ["get", "/api/v1/projects/{projectId}/capabilities/{capabilityId}"],
@@ -238,7 +247,7 @@ const BUSINESS_OPERATIONS: [string, string][] = [
 ];
 
 describe("Phase 2 OpenAPI 覆盖", () => {
-  it("声明全部 25 个业务操作且每个都要求 bearerAuth 与响应定义", async () => {
+  it("声明全部 28 个业务操作且每个都要求 bearerAuth 与响应定义", async () => {
     const doc = await readJson<FullOpenApiDoc>(await SELF.fetch(`${ORIGIN}/openapi.json`));
 
     for (const [method, path] of BUSINESS_OPERATIONS) {

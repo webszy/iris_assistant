@@ -1,6 +1,12 @@
 /** Cloudflare Workers 运行时绑定。 */
 export interface Env {
   DB: D1Database;
+  // Optional so the metadata API remains usable without the content provider.
+  IRIS_MEMORY_REPOSITORY?: string;
+  IRIS_MEMORY_GITHUB_OWNER?: string;
+  IRIS_MEMORY_GITHUB_REPO?: string;
+  IRIS_MEMORY_GITHUB_BRANCH?: string;
+  GITHUB_TOKEN?: string;
 }
 
 /** 对外暴露的用户表示；时间字段统一为 ISO 8601 UTC 字符串。 */

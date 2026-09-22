@@ -92,6 +92,13 @@ A Task is not the durable content it produces. Keep `description` focused on exe
 
 It answers: **Where does the real material live?** It stores metadata and a location reference, not the large content itself. A Resource may describe a repository, directory, file, or external material. Creating metadata does not read or verify the referenced Git or URL contents. Deleting metadata does not delete the underlying material.
 
+The Markdown Resource creation endpoint additionally creates a new Markdown file before
+registering metadata. Content APIs expose full Markdown reads/replacements for the configured
+logical repository under `projects/<project.id>/`; Project slug edits do not move that namespace.
+Ordinary Resource POST still registers only a pointer. PATCH only rebinds metadata pointers,
+not files; DELETE still removes metadata only. Multiple Resources may point at one file and
+share its content revision. Content PUT does not change Resource `updated_at`.
+
 `kind`: `repository`, `directory`, `file`, `url`.
 
 | `role` | Semantic purpose |
@@ -135,7 +142,7 @@ Project Resources
 + Task Resources
 ```
 
-This is the existing design's context assembly semantics, not automatic inheritance stored in the database. The current services store and select Resource metadata; they do not implement an automatic context assembler. Choose the appropriate scope once. Do not duplicate the same Resource across scopes to simulate inheritance. This modeling rule is not a database uniqueness constraint on locations.
+This is the existing design's context assembly semantics, not automatic inheritance stored in the database. The services do not implement an automatic context assembler. Choose the appropriate scope for each reference. Multiple Resources may intentionally reference the same file for different scopes or roles; that is shared content, not automatic inheritance. Locations have no database uniqueness constraint.
 
 ## 9. Capability
 

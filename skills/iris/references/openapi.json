@@ -150,7 +150,13 @@
                   "INVALID_RESOURCE_SCOPE",
                   "INVALID_RESOURCE_LOCATION",
                   "INVALID_CAPABILITY_RESOURCE_KIND",
-                  "RESOURCE_IN_USE"
+                  "RESOURCE_IN_USE",
+                  "CONTENT_ALREADY_EXISTS",
+                  "CONTENT_NOT_FOUND",
+                  "CONTENT_CONFLICT",
+                  "CONTENT_TOO_LARGE",
+                  "RESOURCE_CONTENT_UNSUPPORTED",
+                  "CONTENT_PROVIDER_ERROR"
                 ]
               },
               "message": {
@@ -609,7 +615,7 @@
         },
         "additionalProperties": false
       },
-      "ResourceListResponse": {
+      "CreateMarkdownResourceResponse": {
         "type": "object",
         "properties": {
           "success": {
@@ -619,10 +625,19 @@
             ]
           },
           "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Resource"
-            }
+            "type": "object",
+            "properties": {
+              "resource": {
+                "$ref": "#/components/schemas/Resource"
+              },
+              "content": {
+                "$ref": "#/components/schemas/ResourceContentMetadata"
+              }
+            },
+            "required": [
+              "resource",
+              "content"
+            ]
           }
         },
         "required": [
@@ -706,6 +721,187 @@
           "spec",
           "artifact",
           "reference"
+        ]
+      },
+      "ResourceContentMetadata": {
+        "type": "object",
+        "properties": {
+          "resourceId": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string",
+            "description": "Logical repository alias, not a physical repository URL."
+          },
+          "path": {
+            "type": "string",
+            "description": "Physical path projects/<project.id>/<relative-path>."
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "text/markdown"
+            ]
+          },
+          "revision": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Opaque content revision. Represents content, not every mutation event; identical content may have the same revision."
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5242880
+          }
+        },
+        "required": [
+          "resourceId",
+          "repository",
+          "path",
+          "contentType",
+          "revision",
+          "sizeBytes"
+        ]
+      },
+      "CreateMarkdownResourceRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Canonical Project-relative POSIX path ending in .md or .markdown. No absolute paths, backslashes, null bytes, empty, dot or parent segments. Hidden directories are allowed.",
+            "example": "specs/v0.1-prd.md"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ResourceRole"
+          },
+          "content": {
+            "type": "string",
+            "description": "Unmodified UTF-8 Markdown, including empty text. Maximum 5 MiB (5242880 bytes), otherwise 413 CONTENT_TOO_LARGE."
+          },
+          "milestone_id": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "task_id": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "commit_message": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Trimmed; 1–200 Unicode code points. Defaults to Add/Update <resource name>, truncated to 200 code points."
+          }
+        },
+        "required": [
+          "name",
+          "path",
+          "role",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "ReadResourceContentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResourceContentMetadata"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "Unmodified UTF-8 Markdown, including empty text. Maximum 5 MiB (5242880 bytes), otherwise 413 CONTENT_TOO_LARGE."
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "UpdateResourceContentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/ResourceContentMetadata"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "UpdateResourceContentRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Unmodified UTF-8 Markdown, including empty text. Maximum 5 MiB (5242880 bytes), otherwise 413 CONTENT_TOO_LARGE."
+          },
+          "expected_revision": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Opaque content revision. Represents content, not every mutation event; identical content may have the same revision."
+          },
+          "commit_message": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Trimmed; 1–200 Unicode code points. Defaults to Add/Update <resource name>, truncated to 200 code points."
+          }
+        },
+        "required": [
+          "content",
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "ResourceListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Resource"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data"
         ]
       },
       "ResourceItemResponse": {
@@ -2069,6 +2265,383 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/resources/markdown": {
+      "post": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Create a Markdown file and register its Resource",
+        "description": "Creates a new file under projects/<project.id>/<path>, then D1 metadata. Never overwrites or registers an existing file. kind/repository/user/project are server-controlled. milestone_id and task_id are mutually exclusive and must belong to this user and Project.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMarkdownResourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource and content metadata, including revision; no Markdown body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMarkdownResourceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: missing/invalid fields or unknown properties.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED: missing or invalid Iris Bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project/Milestone/Task does not exist or is outside the authenticated user and URL Project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONTENT_ALREADY_EXISTS: physical path already exists. Use ordinary Resource POST to register an existing file.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "CONTENT_TOO_LARGE: Markdown exceeds 5 MiB UTF-8 bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_RESOURCE_SCOPE or INVALID_RESOURCE_LOCATION: invalid child scope or noncanonical/non-Markdown path.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: metadata insert failed. Compensation only follows confirmed absence; an unknown outcome or failed compensation requires operator inspection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "CONTENT_PROVIDER_ERROR: configuration, authentication, rate limit, network or malformed upstream response. A failed write response may have an unknown outcome; do not blindly retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/resources/{resourceId}/content": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Read Markdown Resource content",
+        "description": "Requires kind=file, the configured logical repository, a canonical Markdown path within this Project ID directory and an existing file. Returns matching content/revision, up to 5 MiB.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "resourceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full content and its content revision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadResourceContentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: missing/invalid fields or unknown properties.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED: missing or invalid Iris Bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project/Resource missing or inaccessible; CONTENT_NOT_FOUND for a broken content pointer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "CONTENT_TOO_LARGE: Markdown exceeds 5 MiB UTF-8 bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RESOURCE_CONTENT_UNSUPPORTED: kind, repository, Markdown extension or Project path boundary is unsupported.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: server failure. Unknown write results require inspection before retrying.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "CONTENT_PROVIDER_ERROR: configuration, authentication, rate limit, network or malformed upstream response. A failed write response may have an unknown outcome; do not blindly retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Replace Markdown content using optimistic concurrency",
+        "description": "GET before UPDATE. Replaces the full text only if expected_revision matches; never merges or retries with a newer revision. Does not update Resource metadata or updatedAt. Identical text may retain its revision; intermediate A→B→A changes are not detected.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "projectId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "resourceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResourceContentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Content metadata including resulting revision; no Markdown body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateResourceContentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST: missing/invalid fields or unknown properties.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED: missing or invalid Iris Bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project/Resource missing or inaccessible; CONTENT_NOT_FOUND for a broken content pointer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONTENT_CONFLICT: re-read and resolve the intended edit against the latest content before retrying.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "CONTENT_TOO_LARGE: Markdown exceeds 5 MiB UTF-8 bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RESOURCE_CONTENT_UNSUPPORTED: kind, repository, Markdown extension or Project path boundary is unsupported.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: server failure. Unknown write results require inspection before retrying.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "CONTENT_PROVIDER_ERROR: configuration, authentication, rate limit, network or malformed upstream response. A failed write response may have an unknown outcome; do not blindly retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{projectId}/resources": {
       "get": {
         "tags": [
@@ -2334,7 +2907,7 @@
           "Resource"
         ],
         "summary": "更新 Resource metadata",
-        "description": "任何修改都会在合并后的完整记录上重新执行归属、location 与引用校验。若 kind 变更会破坏已有 Capability 关系，返回 422 且不写入。",
+        "description": "任何修改都会在合并后的完整记录上重新执行归属、location 与引用校验。若 kind 变更会破坏已有 Capability 关系，返回 422 且不写入。仅修改/重新绑定 metadata pointer；不移动、重命名、创建或删除 Git 内容。",
         "security": [
           {
             "bearerAuth": []

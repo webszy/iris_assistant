@@ -142,7 +142,8 @@ export async function listResources(db: Database, userId: string, projectId: str
   return rows.map(toResourceResponse);
 }
 
-export async function createResource(db: Database, userId: string, projectId: string, body: z.infer<typeof createResourceRequestSchema>) {
+/** Shared deterministic validation; this function never writes metadata or content. */
+export async function validateResourceCreation(db: Database, userId: string, projectId: string, body: z.infer<typeof createResourceRequestSchema>) {
 
   const project = await findUserProject(db, userId, projectId);
   if (project === undefined) {
@@ -180,6 +181,11 @@ export async function createResource(db: Database, userId: string, projectId: st
     }
   }
 
+  return { milestoneId, taskId, repository, path, url };
+}
+
+export async function createResource(db: Database, userId: string, projectId: string, body: z.infer<typeof createResourceRequestSchema>) {
+  const { milestoneId, taskId, repository, path, url } = await validateResourceCreation(db, userId, projectId, body);
   const id = crypto.randomUUID();
   const now = nowEpochMs();
 

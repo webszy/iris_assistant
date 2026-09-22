@@ -98,7 +98,7 @@ export const updateResourceRoute = createRoute({
   tags: ["Resource"],
   summary: "更新 Resource metadata",
   description:
-    "任何修改都会在合并后的完整记录上重新执行归属、location 与引用校验。若 kind 变更会破坏已有 Capability 关系，返回 422 且不写入。",
+    "任何修改都会在合并后的完整记录上重新执行归属、location 与引用校验。若 kind 变更会破坏已有 Capability 关系，返回 422 且不写入。仅修改/重新绑定 metadata pointer；不移动、重命名、创建或删除 Git 内容。",
   security: [{ bearerAuth: [] }],
   request: {
     params: resourceParamsSchema,

@@ -10,6 +10,7 @@ import { registerHealthRoute } from "./routes/health";
 import { registerMilestoneRoutes } from "./routes/milestones";
 import { registerProjectRoutes } from "./routes/projects";
 import { registerResourceRoutes } from "./routes/resources";
+import { registerResourceContentRoutes } from "./routes/resource-content";
 import { registerTaskRoutes } from "./routes/tasks";
 import { registerTestRoute } from "./routes/test";
 import type { AppEnv } from "./types/env";
@@ -39,6 +40,7 @@ export function createApp(): OpenAPIHono<AppEnv> {
   registerProjectRoutes(app);
   registerMilestoneRoutes(app);
   registerTaskRoutes(app);
+  registerResourceContentRoutes(app);
   registerResourceRoutes(app);
   registerCapabilityRoutes(app);
 

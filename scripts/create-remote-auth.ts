@@ -1,12 +1,14 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { nowEpochMs } from "../src/lib/time";
 import { generateRawToken, hashToken } from "../src/lib/token";
+import { parseWranglerResponse } from "./lib/wrangler-response";
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_TIMEZONE = "Asia/Shanghai";
@@ -25,19 +27,63 @@ function runWrangler(args: string[]): string {
   });
 }
 
-function parseWranglerResponse(output: string, failureMessage: string): unknown[] {
-  let response: unknown;
+async function askApiUrl(): Promise<string> {
+  if (!process.stdin.isTTY) {
+    throw new Error("请在交互式终端中运行并输入 API URL；未生成 Token，也未创建远程用户。");
+  }
+  const input = createInterface({ input: process.stdin, output: process.stderr });
+  const abort = new AbortController();
+  input.once("close", () => abort.abort());
+  let answer: string;
   try {
-    response = JSON.parse(output);
+    answer = (await input.question("请输入 Iris API URL（必填）：", { signal: abort.signal })).trim();
   } catch {
-    throw new Error(failureMessage);
+    throw new Error("未提供 API URL，已取消；未生成 Token，也未创建远程用户。");
+  } finally {
+    input.close();
   }
-  if (!Array.isArray(response) || response.length === 0 ||
-      response.some((item: unknown) =>
-        typeof item !== "object" || item === null || !("success" in item) || item.success !== true)) {
-    throw new Error(failureMessage);
+  try {
+    if (!answer || /\s/.test(answer)) throw new Error();
+    const url = new URL(answer);
+    if (!/^https?:\/\//i.test(answer) || !["https:", "http:"].includes(url.protocol) ||
+        !url.hostname || url.username || url.password || url.search || url.hash) {
+      throw new Error();
+    }
+    return url.href.replace(/\/+$/, "");
+  } catch {
+    throw new Error("API URL 必须是有效的 HTTP(S) 基础地址，且不含凭据、查询参数或片段；未生成 Token，也未创建远程用户。");
   }
-  return response;
+}
+
+function saveConfig(apiUrl: string, rawToken: string): void {
+  const configDir = join(homedir(), ".iris");
+  const configFile = join(configDir, "config.env");
+  mkdirSync(configDir, { recursive: true, mode: 0o700 });
+  chmodSync(configDir, 0o700);
+  let content = "";
+  try {
+    content = readFileSync(configFile, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  for (const [key, value] of [["IRIS_API_URL", apiUrl], ["IRIS_API_TOKEN", rawToken]] as const) {
+    // 单引号转义使配置可安全地通过 shell source 加载。
+    const assignment = `${key}='${value.replace(/'/g, "'\\''")}'`;
+    const pattern = new RegExp(`^[\\t ]*(?:export[\\t ]+)?${key}[\\t ]*=.*$`, "gm");
+    if (pattern.test(content)) {
+      content = content.replace(pattern, () => assignment);
+    } else {
+      content += `${content && !content.endsWith("\n") ? "\n" : ""}${assignment}\n`;
+    }
+  }
+  const stagingDir = mkdtempSync(join(configDir, ".config-"));
+  try {
+    const stagedFile = join(stagingDir, "config.env");
+    writeFileSync(stagedFile, content, { encoding: "utf8", mode: 0o600 });
+    renameSync(stagedFile, configFile);
+  } finally {
+    rmSync(stagingDir, { recursive: true, force: true });
+  }
 }
 
 async function main(): Promise<void> {
@@ -56,7 +102,9 @@ async function main(): Promise<void> {
     process.stdout.write(
       "用法：npm run auth:create-remote -- --user-name <用户名> " +
       "[--token-name personal-production] [--expires-days 90]\n" +
+      "先交互询问 API URL；未填写或格式无效时，不生成 Token、不创建远程用户。\n" +
       "向 wrangler.jsonc 中 DB 绑定的远程 D1 创建新用户，再为该用户创建 Token。\n" +
+      "核验成功后将 IRIS_API_URL 和 IRIS_API_TOKEN 保存到 ~/.iris/config.env。\n" +
       "有效期为 1–365 天，默认 90 天；每次执行都会创建一组新的用户和 Token。\n",
     );
     return;
@@ -76,6 +124,7 @@ async function main(): Promise<void> {
     throw new Error("--expires-days 必须为 1–365 的整数。");
   }
 
+  const apiUrl = await askApiUrl();
   const userId = crypto.randomUUID();
   const tokenId = crypto.randomUUID();
   const rawToken = generateRawToken();
@@ -99,22 +148,18 @@ async function main(): Promise<void> {
   try {
     // 临时 SQL 仅包含 Token 的 SHA-256 摘要，不包含原始 Token。
     writeFileSync(sqlFile, sql, { encoding: "utf8", mode: 0o600 });
-    let output: string;
     try {
-      output = runWrangler([
+      const output = runWrangler([
         "d1", "execute", "DB", "--remote", "--config", join(PROJECT_ROOT, "wrangler.jsonc"),
         "--file", sqlFile, "--json",
       ]);
+      parseWranglerResponse(output, "Wrangler 写入响应无法确认。");
     } catch {
-      throw new Error(
-        "远程写入未确认成功。请检查 Wrangler 登录、D1 绑定及迁移状态；" +
-        `写入结果可能未知，请先按用户 ID ${userId} 和 Token ID ${tokenId} 核查后再重试。`,
+      // 网络断开或输出格式变化不等于写入失败；只回读，不自动重试 INSERT。
+      process.stderr.write(
+        "Wrangler 写入响应未确认，正在按本次 ID 和 Token 摘要回读远程记录；不会重复写入。\n",
       );
     }
-    parseWranglerResponse(
-      output,
-      `Wrangler 未返回预期的写入结果。请按用户 ID ${userId} 和 Token ID ${tokenId} 核查远程记录。`,
-    );
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
@@ -122,7 +167,9 @@ async function main(): Promise<void> {
   const verifySql = [
     "SELECT users.id AS user_id, api_tokens.id AS token_id",
     "FROM users JOIN api_tokens ON api_tokens.user_id = users.id",
-    `WHERE users.id = ${sqlLiteral(userId)} AND api_tokens.id = ${sqlLiteral(tokenId)};`,
+    `WHERE users.id = ${sqlLiteral(userId)} AND api_tokens.id = ${sqlLiteral(tokenId)}`,
+    `AND api_tokens.token_hash = ${sqlLiteral(tokenHash)}`,
+    `AND api_tokens.expires_at = ${expiresAt} AND api_tokens.revoked_at IS NULL;`,
   ].join("\n");
   let verifyOutput: string;
   try {
@@ -133,24 +180,40 @@ async function main(): Promise<void> {
   } catch {
     throw new Error(
       `远程核验失败。用户 ID ${userId} 和 Token ID ${tokenId} 可能已创建，` +
-      "为避免泄露未确认可用的凭据，本次不显示原始 Token。",
+      "本次不显示原始 Token。请先核查这两个 ID，不要直接重跑创建命令；" +
+      "若记录已存在，原始 Token 无法恢复，需要撤销旧 Token 后另行签发。",
     );
   }
   const verifyResponse = parseWranglerResponse(
     verifyOutput,
-    `无法确认远程记录。请按用户 ID ${userId} 和 Token ID ${tokenId} 核查；本次不显示原始 Token。`,
+    `无法确认远程记录。请按用户 ID ${userId} 和 Token ID ${tokenId} 核查；` +
+      "本次不显示原始 Token，请勿直接重跑创建命令。",
   );
   const firstResult = verifyResponse[0];
   const rows = typeof firstResult === "object" && firstResult !== null && "results" in firstResult &&
       Array.isArray(firstResult.results) ? firstResult.results : [];
   if (rows.length !== 1 || rows[0]?.user_id !== userId || rows[0]?.token_id !== tokenId) {
     throw new Error(
-      `远程记录核验不匹配。请按用户 ID ${userId} 和 Token ID ${tokenId} 核查；本次不显示原始 Token。`,
+      `远程记录核验不匹配。请分别核查用户 ID ${userId} 和 Token ID ${tokenId}，` +
+      "排除部分写入或凭据不匹配后再处理；本次不显示原始 Token，请勿直接重跑创建命令。",
     );
+  }
+
+  let configSaved = false;
+  try {
+    saveConfig(apiUrl, rawToken);
+    configSaved = true;
+  } catch {
+    process.stderr.write(
+      "远程用户和 Token 已创建并核验，但本地 ~/.iris/config.env 保存失败。" +
+      "请安全保存下方 Token，并手动配置 IRIS_API_URL 和 IRIS_API_TOKEN；不要重跑创建命令。\n",
+    );
+    process.exitCode = 1;
   }
 
   process.stdout.write([
     "",
+    ...(configSaved ? ["IRIS_API_URL 和 IRIS_API_TOKEN 已保存到 ~/.iris/config.env（权限 600）。"] : []),
     "线上用户和 Token 已创建。原始 Token 仅在本次成功后显示，请立即保存到密码管理器：",
     "",
     rawToken,

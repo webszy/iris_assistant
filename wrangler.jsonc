@@ -5,6 +5,13 @@
   // 必须 <= miniflare 内置 workerd 支持的最高兼容日期（当前为 2026-08-22），
   // 否则 @cloudflare/vitest-pool-workers 启动测试 Worker 时会报 ERR_RUNTIME_FAILURE。
   "compatibility_date": "2026-08-22",
+  "vars": {
+    "IRIS_MEMORY_REPOSITORY": "iris-memory",
+    // 填写已有 GitHub 仓库的 owner 和 repo；分支也必须已存在。
+    "IRIS_MEMORY_GITHUB_OWNER": "webszy",
+    "IRIS_MEMORY_GITHUB_REPO": "iris-memory",
+    "IRIS_MEMORY_GITHUB_BRANCH": "main"
+  },
   "d1_databases": [
     {
       // 占位符：本地开发（wrangler dev、d1 execute --local、d1 migrations apply --local）
