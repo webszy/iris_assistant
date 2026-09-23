@@ -24,9 +24,13 @@ Title/body are snapshots; later edits and retries do not rewrite them.
 
 Response `sourceContext.reminderId` is resolved by the server through user-scoped relations,
 not stored as another identity. If the relation is unavailable, sourceContext is null.
-For “做完了 / 晚点 / 今天算了”, load **reminder-api.md**, resolve/verify the exact occurrence,
+For “做完了 / 晚点 / 今天算了”, first confirm sourceType=reminder_occurrence; otherwise
+do not call Reminder actions. Load [reminder-api.md](reminder-api.md), resolve/verify the exact occurrence,
 and call `/reminders/{sourceContext.reminderId}/occurrences/{sourceId}/done`, `/delay`, or `/skip`.
 Read the current occurrence before acting; old notifications may describe an earlier generation.
+Prefer source context already present in the conversation; do not reread Notification merely
+to rediscover known IDs. If context is missing, read it by its known notificationId. Null
+sourceContext needs another independently established exact parent identity or clarification.
 If the target/intent cannot be resolved reliably, ask; never guess from title/body.
 No global occurrence lookup or Notification business-action endpoint exists.
 
@@ -45,6 +49,7 @@ Later enabling/adding channels does not revive a historical failed Notification.
 Existing Delivery retries continue after settings/channel disable and after Reminder
 DONE/SKIP/CANCEL/RESCHEDULE/DELAY. Global disable blocks new acceptance/fallback selection.
 DELAY can produce another Notification with a new triggerVersion; the old one continues.
+Never promise to retract or delete an accepted message.
 
 Dispatcher reserves at most 5 attempts, including attempts whose worker crashes. Retry delays
 are 1, 5, 15, 60 minutes; nextAttemptAt is the earliest eligible time. Scheduler runs about once
@@ -93,3 +98,22 @@ can still have pending Deliveries; that is intentional.
 Load this reference for Notification reads/settings/channels. Load reminder-api.md for source
 business actions. Do not automatically load Finance/content/Resource/Capability references or
 all of openapi.json. Read OpenAPI only for an exact schema, debugging or detected drift.
+
+## Query and channel workflows
+
+- “最近有没有发送失败的通知”：list the relevant history and inspect deliveryState. There is
+  no status/delivery_state query filter; filter returned events locally. If the question
+  concerns individual failed attempts/channels, read the event's Deliveries: a failed primary
+  Delivery can coexist with successful fallback, so it does not imply overall event failure.
+- “刚才为什么通知我”：read the immutable snapshot and source identity; do not change the
+  source object unless asked. Load reminder-api.md only if source inspection/action needs it.
+- “为什么没提醒我”：with reminder-api.md, inspect exact occurrence state, match Notification
+  sourceId/sourceVersion in the returned history, then inspect Deliveries. There is no public
+  source_id filter or global occurrence lookup. Missing events do not prove provider failure.
+- “把 Push 调成 Conduit 的后备”：read configured channels, resolve actual IDs, and update only
+  enabled/priority as authorized so Conduit precedes Push. Preserve other channels and settings;
+  verify the resulting order. These are example names, not registered production adapters.
+  Report absent/unavailable channels; never invent IDs, auto-create providers or send secrets.
+- Settings use PUT, not PATCH. Inspect success data after settings/channel mutations; read
+  again only when needed (e.g. final order after multiple changes). Partial multi-write results
+  must be reported accurately. Do not reset unrelated priorities merely to get tidy numbers.

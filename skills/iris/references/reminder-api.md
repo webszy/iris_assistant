@@ -11,9 +11,11 @@ pending. Do not promise external delivery. Fake adapters are test-only.
 
 Load this reference for Reminder operations; add project-api.md only to resolve an
 explicit Project. Use OpenAPI only for exact schema/debugging. Do not automatically
-load Finance, content, Resource or Capability references.
-Read before write. Resolve actual reminderId and occurrenceId from API state or reliable
-notification context; verify the nested relationship. Titles are not identities.
+load Notification, Finance, content, Resource or Capability references for scheduling alone.
+Read enough current state before modifying an existing target or resolving ambiguity.
+A clearly new Reminder with a resolved time/timezone can CREATE without listing all reminders.
+Resolve actual reminderId and occurrenceId from API state or reliable notification context;
+read the exact occurrence before mutation and verify the nested relationship. Titles are not identities.
 If several candidates remain, ask which one. Never guess from “done” or “later”.
 
 ## API
@@ -109,21 +111,20 @@ after now. An exhausted replacement rule is accepted with no new occurrence, and
 completion is recomputed. Completed/cancelled parents reject schedule changes.
 A return to a previous time is legal in a new scheduleVersion.
 
-## Progression and identities
+## Source identity and follow-ups
 
-After trigger or early DONE/SKIP, advance strictly after max(now, scheduledFor), only
-when that version has no later occurrence already. Historical actions never advance twice.
-Do not materialize ungenerated downtime backlog; existing delayed occurrences are retained.
-nextTriggerAt is min(triggerAt) across all pending, or null.
+Notification `sourceType` must be `reminder_occurrence`. `sourceId` is occurrenceId,
+`sourceContext.reminderId` is reminderId, and `sourceVersion` identifies triggerVersion,
+not scheduleVersion. Prefer the context already present; no Notification read is needed
+when it supplies the full identity. A known exact reminderId/occurrenceId pair also works.
+Read the nested occurrence to check current parent/state before acting; an old Notification
+can describe an earlier trigger generation. Missing/null sourceContext requires another
+reliable exact parent identity or clarification, never title matching or a guessed ID.
 
-Logical identity: `(reminderId, scheduleVersion, scheduledFor)`.
-Execution identity: `(occurrenceId, triggerVersion)`; A→B→A creates different generations.
-Notification + initial Delivery + occurrence status/count + necessary next occurrence share
-one guarded D1 batch. Dedupe is `reminder-occurrence:{occurrenceId}:trigger:{triggerVersion}`.
-Action-first blocks stale acceptance; event-first preserves Notification and Delivery retries.
-Notification response sourceContext.reminderId and sourceId resolve the nested action target;
-read the current occurrence before acting on context from an older triggerVersion.
-triggerAt is a target time; processing depends on the approximately one-minute scheduler cadence, without a seconds-level SLA.
+DONE/SKIP/DELAY belong to the occurrence. Never PATCH its fields or invoke business actions
+on Notification. Accepted Notifications and their existing Deliveries are not withdrawn by
+DONE/SKIP/CANCEL/RESCHEDULE/DELAY. DELAY may produce another event while the old event remains.
+triggerAt is a target time, not a seconds-level delivery promise.
 
 ## Intent mapping
 
@@ -136,6 +137,18 @@ triggerAt is a target time; processing depends on the approximately one-minute s
 | 今天算了，明天正常 | SKIP |
 | 以后别提醒了 | CANCEL Reminder |
 | 以后都改成晚上九点 | PATCH schedule |
+
+**DELAY != RESCHEDULE; SKIP != CANCEL; DONE != CANCEL.** Resolve the current date and
+established timezone for relative times. “明天” or “晚点” without a reliably established
+clock time requires clarification; never submit natural-language text as a datetime.
+Condition-based “美元跌到 7 以下提醒我” is unsupported Watch/Rule, not a Reminder.
+
+## Verification
+
+CREATE/PATCH/CANCEL return the Reminder definition; inspect identity and requested schedule
+or status. DONE/SKIP/DELAY return the occurrence; inspect identity/parent, resulting status,
+and triggerAt/triggerVersion for DELAY. Read again only when needed to establish the result.
+Never equate creation, durable acceptance or successful delivery with user completion.
 
 ## Errors
 

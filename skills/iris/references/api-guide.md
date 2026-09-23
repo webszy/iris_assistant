@@ -2,15 +2,17 @@
 
 ## 1. Source of Truth
 
-- This file is a quick operational guide.
-- `openapi.json` is the authoritative API specification (Iris API, version `0.1.0`).
-- If this guide and OpenAPI differ, follow `openapi.json`.
+This legacy aggregate guide is optional workflow background. Routine operations load only
+the matching module reference from [SKILL.md](../SKILL.md), including
+[finance-api.md](finance-api.md), [reminder-api.md](reminder-api.md) and
+[notification-api.md](notification-api.md) when their modules are needed.
 
-**Reference status:** `openapi.json` has been regenerated from the current source (18 paths,
-30 operations, 43 schemas) and includes the Markdown Content operations below. After any route
-or schema change, regenerate it from the repository root with `pnpm run openapi:export` and
-verify the result with `pnpm run openapi:check`. Before operational writes, check the target
-deployment's `/openapi.json`; a source change does not imply the deployment supports it yet.
+The current generated [openapi.json](openapi.json) is Iris API v0.2.0. During maintenance,
+resolve conflicts using actual implementation/routes/services, then OpenAPI source,
+then generated OpenAPI, then references and older Skill wording. Do not change backend
+contracts to match an old guide. Source availability does not prove deployed availability.
+Inspect relevant deployment schemas only for missing exact detail, unexpected errors or
+suspected drift; do not fetch the full specification before every routine operation.
 
 ## 2. Connection
 
@@ -23,7 +25,7 @@ For these examples, omit a trailing slash and append the exact paths shown below
 ## 3. Authentication
 
 OpenAPI defines `bearerAuth` as HTTP Bearer authentication.
-All Project, Milestone, Task, Resource, and Capability operations require it:
+All domain operations, including Finance, Reminder and Notification, require it:
 
 ```http
 Authorization: Bearer $IRIS_API_TOKEN
@@ -42,7 +44,8 @@ Authorization: Bearer $IRIS_API_TOKEN
 - Read the existing entity before updating it; use exact OpenAPI enum values.
 - Send JSON bodies with `Content-Type: application/json` where a body is specified.
 - Create/update schemas reject additional properties. Send only documented writable fields.
-- Nested routes identify the Project in the URL; do not add `project_id` to their bodies.
+- Project-nested routes identify the Project in the URL; do not add `project_id` to
+  those bodies. Reminder has a separate optional `project_id` association.
 - Request fields such as `milestone_id`, `task_id`, and `resource_id` use snake_case;
   returned fields use `milestoneId`, `taskId`, and `resourceId`.
 - Core list responses contain `{ "success": true, "data": [...] }`; item responses contain
@@ -156,80 +159,10 @@ A Resource referenced by any Capability, including a disabled one, cannot be del
 
 ### Markdown Resource Content
 
-Use the bundled `scripts/iris-content.mjs` client for these operations when available;
-see [local-cache.md](local-cache.md) for CLI commands and JSON input. GET normally uses
-the local TTL cache; explicit latest/refresh requests and post-write verification use
-`get --refresh`. PUT remains server-authoritative and invalidates on success/conflict.
-CREATE, locator Resource PATCH and Resource DELETE also invalidate via the client;
-when using raw API calls, invoke its `invalidate` command for those same events.
-The table below describes the unchanged server contract; the client GET returns only
-resourceId/content/revision/sizeBytes on both hits and misses. Cache is temporary, not truth.
-
-| Operation | Endpoint | Request | Success |
-| --- | --- | --- | --- |
-| Create new Markdown + Resource | `POST /api/v1/projects/{projectId}/resources/markdown` | Required: `name`, `path`, `role`, `content`. Optional: `milestone_id`, `task_id`, `commit_message`. | `201`, `data.resource` and `data.content` metadata |
-| Read full Markdown | `GET /api/v1/projects/{projectId}/resources/{resourceId}/content` | No body | `200`, `data` includes full `content`, `revision`, `sizeBytes` |
-| Replace full Markdown | `PUT /api/v1/projects/{projectId}/resources/{resourceId}/content` | Required: `content`, `expected_revision`. Optional: `commit_message`. | `200`, `data` contains content metadata |
-
-Create `path` is Project-relative, e.g. `specs/prd.md`. The server maps it to storage;
-do not construct a physical prefix from the Project ID or reuse returned physical paths
-as CREATE input.
-Paths must be canonical POSIX paths ending in lowercase `.md` or `.markdown`. Absolute
-paths, backslashes, null/control bytes, dot/parent/empty segments, duplicate or trailing
-slashes are rejected; hidden directories and names such as `skills/` are allowed.
-The logical repository, kind, user and Project are server-controlled. Child scope IDs
-remain mutually exclusive and must belong to the same user and Project.
-
-All three operations require the existing Bearer authentication. Content reads/updates
-require `kind=file`, the configured logical repository and a valid path inside the current
-Project namespace managed by the server. Ordinary POST may register existing files; multiple Resources may
-reference the same file and share its revision. Markdown CREATE only creates a new file:
-existing physical content returns `409 CONTENT_ALREADY_EXISTS`, even after metadata deletion.
-An existing pointer whose physical file is absent does not itself block Markdown CREATE.
-
-Content is preserved as UTF-8 text, including empty content, BOM and CRLF/LF; no formatting
-or newline normalization. CREATE/READ/UPDATE permit up to **5 MiB (5242880 UTF-8 bytes)**.
-Larger content returns `413 CONTENT_TOO_LARGE`. `commit_message` is trimmed, must be nonempty
-and at most 200 Unicode code points. Defaults are `Add <name>` / `Update <name>`, safely
-truncated; the Resource name itself is unchanged.
-
-Metadata responses contain `resourceId`, `repository` (logical alias), `path`,
-`contentType: text/markdown`, `revision`, `sizeBytes`. CREATE/PUT omit the content body.
-PUT changes neither Resource metadata nor `updatedAt`.
-
-Treat `revision` as an opaque content revision. GET before UPDATE; pass the revision
-from the content you actually edited as `expected_revision`. Identical text can retain
-its revision, including A→B→A; even identical submitted text must pass the revision check.
-There is no server merge or silent latest-version retry.
-
-Typical Agent workflows:
-
-1. **Create:** resolve Project → list Resources and compare meaning/path/scope → read
-   plausible matches when needed → POST new Markdown only if absent → verify
-   `data.resource` identity/role/scope and `data.content` metadata.
-2. **Read:** resolve Project and Resource → GET content → answer from `data.content`,
-   never from metadata or chat memory alone.
-3. **Update:** resolve Project and Resource → GET content/revision → minimally edit the
-   current text → PUT full `content` plus `expected_revision` → verify returned identity
-   and revision. Preserve unrelated text and formatting. GET again when text verification
-   is needed; CREATE/PUT do not return the body, and `updatedAt` does not track content.
-
-| Error | Agent action |
-| --- | --- |
-| `409 CONTENT_ALREADY_EXISTS` | Re-list Resources and resolve the existing document. No overwrite, random rename or immediate POST retry. If the user intends an edit, READ + UPDATE; if it is a distinct document, choose a clear new path; clarify ambiguity. If no Resource resolves, report the pointer gap rather than guessing physical storage details. |
-| `409 CONTENT_CONFLICT` | Do not claim success. GET latest content, compare the original and intended edit, and safely reapply with the latest revision. Stop and ask for confirmation on semantic conflicts or possible loss of others' edits. No old-revision retry or last-write-wins. |
-| `404 CONTENT_NOT_FOUND` | Resource pointer exists, but its underlying content is missing. Do not assume empty content, recreate it or delete metadata. Suggest checking/rebinding the pointer. |
-| `413 CONTENT_TOO_LARGE` | Report the 5 MiB limit; do not repeatedly retry or truncate and write back. |
-| `422 RESOURCE_CONTENT_UNSUPPORTED` | Explain that this is not a supported Markdown file Resource; do not bypass Iris. |
-| `502 CONTENT_PROVIDER_ERROR` | Report Iris content-provider failure. Stop dependent writes; a write outcome may be unknown, so inspect state after recovery before any retry. |
-| `500 INTERNAL_ERROR` | A failed create may have an unknown result. Inspect Resources/content before retrying; request operator inspection if the state cannot be resolved. |
-
-Use only Iris APIs and the runtime `IRIS_API_URL` / `IRIS_API_TOKEN`. Provider credentials
-and repository operations belong to the server; never request credentials in chat or
-access the provider directly. Ordinary Resource POST can register an existing file only
-when its location is established and registration is intended; CREATE does not overwrite it.
-There is no content DELETE, move/rename, automatic repair, semantic Markdown editing or
-PRD decomposition endpoint. The Agent performs planning itself.
+Load [content-api.md](content-api.md) for Markdown CREATE / READ / UPDATE, request/response
+contracts, path limits, revision checks, examples and errors. Resource metadata operations
+above never substitute for reading or writing the content. Existing optional client/cache
+behavior is documented in [local-cache.md](local-cache.md).
 
 ### PRD intent and structured state
 
@@ -369,21 +302,15 @@ Consult each operation's responses; not every operation declares every status be
 | `400` | Request parameter validation failed | Check fields, types, enum values, and parameters. |
 | `401` | Missing or invalid access token | Check runtime credentials without exposing them. |
 | `404` | Entity missing or outside the current user/URL Project scope | Re-resolve IDs and ownership context. |
-| `409` | Slug/reference conflict, content already exists, or revision conflict | Inspect the error code; use the Markdown error workflow for content conflicts. |
+| `409` | Slug/reference conflict, content already exists, or revision conflict | Inspect the error code; use [content-api.md](content-api.md) for content conflicts. |
 | `413` | Markdown exceeds the supported size | Do not truncate and write back. |
 | `422` | Invalid scope/location/kind, or unsupported Content Resource | Recheck constraints; never bypass Iris. |
 | `502` | Iris content-provider failure | Stop dependent writes and inspect uncertain outcomes before retrying. |
 
-Bundled `ApiError.error.code` enum values (20, synchronized with the current source):
-`BAD_REQUEST`, `UNAUTHORIZED`, `NOT_FOUND`, `INTERNAL_ERROR`,
-`PROJECT_NOT_FOUND`, `MILESTONE_NOT_FOUND`, `TASK_NOT_FOUND`, `RESOURCE_NOT_FOUND`,
-`CAPABILITY_NOT_FOUND`, `SLUG_ALREADY_EXISTS`, `INVALID_RESOURCE_SCOPE`,
-`INVALID_RESOURCE_LOCATION`, `INVALID_CAPABILITY_RESOURCE_KIND`, `RESOURCE_IN_USE`,
-`CONTENT_ALREADY_EXISTS`, `CONTENT_NOT_FOUND`, `CONTENT_CONFLICT`, `CONTENT_TOO_LARGE`,
-`RESOURCE_CONTENT_UNSUPPORTED`, `CONTENT_PROVIDER_ERROR`.
-Re-run `pnpm run openapi:export` after changing error codes so the bundled artifact stays synchronized.
-The shared enum does not define a per-operation code-to-status mapping;
-do not infer additional HTTP statuses from the code names.
+Use the affected module's error section for Finance, Reminder and Notification codes and
+recovery. The shared ApiError enum also contains reserved/internal conditions; it does not
+prove a public endpoint returns a code or define per-operation HTTP status mappings.
+Consult relevant OpenAPI/route definitions only when exact detail is missing or drift is suspected.
 
 ## 13. Minimal HTTP Examples
 
@@ -417,8 +344,6 @@ curl -X PATCH -H "Authorization: Bearer $IRIS_API_TOKEN" \
 
 ## 14. Full Specification
 
-For exact schemas, enums, parameters, response bodies, and all available endpoints, read:
-
-`openapi.json`
-
-Agent must prefer OpenAPI whenever exact API details are needed.
+Use the relevant [openapi.json](openapi.json) section only when a module reference lacks exact
+schema/enum detail, an unexpected error needs investigation, or documentation drift is suspected.
+Do not load the full specification for a routine operation already covered by its reference.

@@ -6,11 +6,13 @@ It reflects the current repository implementation. Modeling guidance explains in
 
 ## 1. Core Principle
 
-> Everything lives in a Project.
+> Project-owned work and material live in a Project; personal Reminders need not.
 
 > This does not mean everything becomes a Project.
 
-Project is the long-lived context container for Milestones, Tasks, Resources, and Capabilities.
+Project is the long-lived context container for Milestones, Tasks, Resources, Capabilities
+and Expenses. Reminder has an optional Project; Finance Settings and Notification
+settings/channels belong to the user, and ExchangeRate is a shared current cache.
 
 An ordinary action, temporary conversation, or external file does not automatically justify creating a new Project.
 
@@ -24,7 +26,8 @@ Project
 ├── Milestones
 ├── Tasks
 ├── Resources
-└── Capabilities
+├── Capabilities
+└── Expenses
 
 Milestone
 ├── Tasks (a Task's Milestone relationship is optional)
@@ -37,7 +40,7 @@ Capability
 └── Resource (exactly one, required; may be shared by multiple Capabilities)
 ```
 
-All five entities have a user owner. Each child entity requires a Project. Optional child relationships stay within the same user and Project. A Resource has at most one direct Milestone or Task scope.
+Project, Milestone, Task, Resource and Capability have a user owner. Their child entities require a Project. Optional child relationships stay within the same user and Project. A Resource has at most one direct Milestone or Task scope.
 
 ## 3. Project
 
@@ -188,6 +191,10 @@ One Resource may support multiple Capabilities; `resource_id` is not unique. Cap
 | Concrete executable work | Task |
 | Durable file, directory, repository, or URL | Resource |
 | Reusable executable ability | Capability, backed by a Resource |
+| Already incurred Project cost | Expense |
+| Time-based attention schedule | Reminder (Project optional) |
+| One specific reminder execution | ReminderOccurrence |
+| Durable message / delivery lifecycle / configured path | Notification / NotificationDelivery / NotificationChannel |
 
 Examples:
 
@@ -208,6 +215,43 @@ Examples:
 - Treating `archived` as Project status or `updated_at` as Task completion time.
 - Treating a Resource as file contents rather than a metadata/location record.
 
-## 14. Current Scope
+## 14. Finance
 
-This reference covers only the implemented Project, Milestone, Task, Resource, and Capability model. Broader roadmap modules and execution systems are not part of this current domain reference.
+Expense is an incurred Project cost held in D1, not a Markdown memory entry. Finance Settings
+holds the user's reporting currency; ExchangeRate is a shared current FX cache. Each Expense
+retains the reporting currency and rate used for it; settings/cache updates do not rewrite
+historical Expenses. Expense currency is immutable; correction requires delete and replacement.
+There is no Account, Income, Balance, Budget or full accounting model in this phase.
+
+## 15. Reminder and Notification
+
+Reminder is a time-based attention schedule, distinct from executable Task state. Project
+association is optional; there is no implicit Task/Milestone/Resource binding. An occurrence
+is one logical execution of that Reminder. Completing/skipping an occurrence does not cancel
+the whole schedule; delaying that execution does not permanently reschedule the definition.
+
+```text
+Reminder → ReminderOccurrence → Notification → NotificationDelivery
+                                                   ↓
+                                          NotificationChannel
+```
+
+Notification is an immutable durable message snapshot with a structured source identity;
+NotificationDelivery records actual delivery, and NotificationChannel configures a delivery
+path. Multiple channels form sequential priority fallback, not simultaneous fan-out.
+For a Reminder event, sourceId identifies the occurrence, sourceVersion its trigger generation,
+and sourceContext.reminderId resolves its parent when that relation is available.
+User follow-ups act on the source occurrence, never on the immutable Notification.
+
+An occurrence becoming triggered means durable Notification acceptance, not delivery, reading
+or user completion. A sent Delivery means provider-confirmed success, not that the user read it.
+Accepted events and existing delivery attempts are not withdrawn by source completion,
+skipping, cancellation, rescheduling or delay. A delayed execution may produce a new event.
+
+## 16. Current Scope
+
+The model includes Project work/material, Finance expense tracking, time-based Reminder and
+Notification delivery infrastructure. Production notification adapters are currently absent;
+without a usable channel an occurrence remains pending. These domain semantics do not imply
+live provider availability, Watch/Rule, condition/event monitoring, arbitrary Agent-created
+Notifications, Reminder pause/resume, calendar sync or an autonomous Agent execution system.

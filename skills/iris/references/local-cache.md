@@ -51,7 +51,7 @@ node skills/iris/scripts/iris-content.mjs clear-cache
 in argv. Use JSON serialization to prepare bodies (not shell interpolation); preserve text.
 PUT input: `{"content":"updated Markdown", "expected_revision":"revision from GET"}`.
 Optional `commit_message` is supported. CREATE and Resource PATCH accept the exact bodies
-in api-guide.md/OpenAPI; no additional server fields are invented. `delete` removes Resource
+in [content-api.md](content-api.md) / [resource-api.md](resource-api.md); no additional server fields are invented. `delete` removes Resource
 metadata only. Run mutations only with the user's authorization and resolved targets.
 
 GET returns the same minimal snapshot on cache hit and miss:

@@ -13,6 +13,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply iris-assisant-db --remote",
     "auth:create-dev": "tsx scripts/create-dev-auth.ts",
     "auth:create-remote": "tsx scripts/create-remote-auth.ts   --user-name admin --token-name admin-key  --expires-days 90",
+    "memory:init": "tsx scripts/init-memory-repo.ts",
     "openapi:export": "tsx scripts/export-openapi.ts",
     "openapi:check": "tsx scripts/export-openapi.ts --check",
     "workbuddy-skill:sync": "rsync -a --delete --exclude '.DS_Store' skills/iris/ \"${CODEBUDDY_CONFIG_DIR:-$HOME/.workbuddy-ai}/skills/iris/\"",
