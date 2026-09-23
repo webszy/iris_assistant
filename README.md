@@ -1,4 +1,7 @@
 # Iris
+
+[简体中文](README.zh-CN.md)
+
 > **Status: Development paused while monitoring the landscape**<br>
 > **Reason: The upcoming OpenAI Bot appears likely to cover most Iris capabilities**
 
